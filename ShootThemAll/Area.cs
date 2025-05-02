@@ -138,7 +138,7 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnEnemy, () =>
             {
-                Enemy enemy = new Enemy(Misc.Rng.Next(1, 4), _hero);
+                Enemy enemy = new Enemy(Misc.Rng.Next(1, 4), _hero, Enemy.RandomColor());
 
                 int border = 80;
 

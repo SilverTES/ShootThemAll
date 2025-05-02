@@ -42,9 +42,9 @@ namespace ShootThemAll
             //batch.Point(_position, _size / 2, Color.LightYellow * _alpha);
             //batch.Point(_position, _size / 4, Color.White * _alpha);
 
-            batch.FilledCircle(G.TexCircle, _position, _size, _color * _alpha * .5f);
-            batch.FilledCircle(G.TexCircle, _position, _size / 2, _color * _alpha * .75f);
-            batch.FilledCircle(G.TexCircle, _position, _size / 4, _color * _alpha * 1f);
+            batch.FilledCircle(G.TexCircle, _position, _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha * .5f);
+            batch.FilledCircle(G.TexCircle, _position, _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f);
+            batch.FilledCircle(G.TexCircle, _position, _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f);
         }
 
     }

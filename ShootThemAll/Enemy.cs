@@ -5,16 +5,29 @@ using Mugen.Event;
 using Mugen.GFX;
 using Mugen.Physics;
 using System;
+using System.Collections.Generic;
 
 namespace ShootThemAll
 {
     public class Enemy : Node
     {
+        public static List<Color> Colors =
+        [
+            Color.Red,
+            Color.Green,
+            Color.Blue,
+            Color.BlueViolet,
+        ];
+        public static Color RandomColor()
+        {
+            return Colors[Misc.Rng.Next(0, Colors.Count)];
+        }
         public enum States
         {
             Idle,
             Hit,
             Shoot,
+            Dead,
         }
         public States CurState => _state.CurState;
         State<States> _state = new State<States>(States.Idle);
@@ -36,16 +49,21 @@ namespace ShootThemAll
         EasingValue _easeEnergy;
 
         float _speed = 2f;
-
+        float _size = 1f;
 
         float _ticWave = 0f;
         float _wave = 0f;
         Node _target;
-        public Enemy(float speed, Node target)
+
+        Color _color;
+
+        public Enemy(float speed, Node target, Color color)
         {
             _type = UID.Get<Enemy>();
             _speed = speed;
             _target = target;
+            _color = color;
+
             _easeEnergy = new EasingValue(_energy);
 
             SetSize(64, 64);
@@ -57,7 +75,7 @@ namespace ShootThemAll
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, 1.5f));
             _timer.Set(Timers.HasShoot, Timer.Time(0, 0, .25f));
 
-            _timer.Start(Timers.Shoot);
+            //_timer.Start(Timers.Shoot);
 
             _timer.On(Timers.Shoot, () => 
             {
@@ -157,50 +175,50 @@ namespace ShootThemAll
                 case States.Idle:
                     HandleCollision();
                     Move(_speed);
-
-                    if (_easeEnergy.Value <= 0)
-                    {
-                        DestroyMe();
-                    }
                     break;
 
                 case States.Hit:
-                    Move(_speed/2);
-                    
-                    if (_easeEnergy.Value <= 0)
-                    {
-                        DestroyMe();
-                    }
+                    //HandleCollision();
+                    Move(_speed / 2);
 
                     break;
 
                 case States.Shoot:
-                    Move(_speed);
-                    HandleCollision();
+                    //HandleCollision();
+                    //Move(_speed);
+                    break;
 
+                case States.Dead:
+
+                    _size -= 0.05f;
+                    if (_size <= 0)
+                    {
+                        _size = 0;
+
+                        G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
+                        new FxExplose(AbsXY, Color.GreenYellow, 20, 100, 50, 10, .92f).AppendTo(_parent);
+                        new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
+                        KillMe();
+                    }
                     break;
             }
         }
         public void DestroyMe()
         {
-            G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
-
-            new FxExplose(AbsXY, Color.GreenYellow, 20, 100, 50, 10, .92f).AppendTo(_parent);
-            //new FxExplose(AbsXY, Color.Gold, 10, 100, 50).AppendTo(_parent);
-
-            new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
-
-            KillMe();
+            _state.Change(States.Dead);
         }
         public override Node Update(GameTime gameTime)
         {
+            UpdateRect();
             _timer.Update();
             _easeEnergy.Update(gameTime);
-
-            UpdateRect();
-
             RunState();
 
+            if (_energy <= 0 && !_state.Is(States.Dead))
+            {
+                //Console.WriteLine("DestroyMe");
+                _state.Change(States.Dead);
+            }
 
             return base.Update(gameTime);
         }
@@ -212,17 +230,19 @@ namespace ShootThemAll
                 var pos = AbsXY + Shake.GetVector2();
 
                 if (_state.Is(States.Idle))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.Green, 0);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _color, 0);
                 else if (_state.Is(States.Hit))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.DarkGreen, 0);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier : 1.1f), 0);
                 else if (_state.Is(States.Shoot))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.ForestGreen, 0);
-                
-                batch.RectangleCentered(pos, AbsRectF.GetSize(), _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.2f), 0);
+                else if (_state.Is(States.Dead))
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.2f), 0);
+
+                batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
-                //batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
-                //batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
+                batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
+                batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
 
                 //Color fg = Color.GreenYellow;
                 //Color bg = Color.Green;

@@ -94,14 +94,15 @@ namespace ShootThemAll
                     _stickLeft.Normalize();
                 }
 
-                if (G.Key.IsKeyDown(Keys.LeftControl)) Shoot();
+                if (G.Key.IsKeyDown(Keys.LeftControl)) 
+                    Shoot();
             }
 
             if (_gamePadState.Buttons.A == ButtonState.Pressed)
             {
-                //Console.WriteLine("Shoot");
                 Shoot();
             }
+
         }
         public void Shoot()
         {
@@ -197,6 +198,8 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.FrontFX)
             {
                 //batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, 0), 5f, Color.Red * .5f);
+
+                batch.FilledCircle(G.TexCircle, AbsXY, 10, Color.Gold * _alpha);
             }
 
             return base.Draw(batch, gameTime, indexLayer);
