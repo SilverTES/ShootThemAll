@@ -72,6 +72,16 @@ namespace ShootThemAll
                 batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 7, Color.LightBlue);
                 batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 3, Color.Cyan);
             }
+            if (indexLayer == (int)Layers.FrontFX)
+            {
+                //batch.FillRectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Yellow, 0);
+
+                batch.FilledCircle(G.TexCircle, AbsXY, 13, Color.Red * .5f);
+                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 15, Color.Red * .5f);
+                //batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 7, Color.LightBlue);
+                //batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 3, Color.Cyan);
+            }
+
             return base.Draw(batch, gameTime, indexLayer);
         }
     }

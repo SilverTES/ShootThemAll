@@ -24,6 +24,8 @@ namespace ShootThemAll
 
         bool _isPaused = false;
 
+        RectangleF _rectArea = new RectangleF(0, 0, 1200, Screen.Height);
+
         public ScreenPlay(Game game)
         {
             _game = game;
@@ -31,7 +33,7 @@ namespace ShootThemAll
             SetSize(Screen.Width, Screen.Height);
 
             _hero = new Hero(PlayerIndex.One);
-            _hero.SetPosition(100, 100);
+            _hero.SetPosition(Screen.Width/2, Screen.Height - 200);
             _hero.AppendTo(this);
 
             int cellSize = 80;
@@ -64,7 +66,8 @@ namespace ShootThemAll
             if (_timer.On(Timers.SpawnEnemy))
             {
                 Enemy enemy = new Enemy(Misc.Rng.Next(1,5));
-                enemy.SetPosition(Screen.Width, Misc.Rng.Next(100, Screen.Height - 100));
+                
+                enemy.SetPosition(Misc.Rng.Next((int)_rectArea.X, (int)(_rectArea.X + _rectArea.Width)), 0);
                 enemy.AppendTo(this);
 
                 float time = Misc.Rng.Next(10, 30) / 10f;
@@ -81,13 +84,18 @@ namespace ShootThemAll
             {
                 batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
                 batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
+
+                batch.FillRectangle(_rectArea, Color.Black * .5f);
+
+                //batch.Draw(G.TexCG00, new Vector2(1200, 0), Color.White * 1f);
+                batch.Rectangle(((RectangleF)G.TexCG00.Bounds).Translate(new Vector2(1200, 0)), Color.White, 3f);
             }
 
             if (indexLayer == (int)Layers.Front)
             {
                 if (_isPaused)
                 {
-                    batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.Black * .5f);
+                    //batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.Black * .5f);
                     batch.FillRectangleCentered(AbsRectF.Center, new Vector2(300, 100), Color.Black * .5f, 0);
                     batch.CenterStringXY(G.FontMain, "P A U S E", AbsRectF.Center, Color.White);
                 }

@@ -33,11 +33,15 @@ namespace ShootThemAll
 
         public static Texture2D TexLine;
         public static Texture2D TexCircle;
+
+        public static Texture2D TexCG00;
+
     }
 
     public class Game1 : Game
     {
         private ScreenPlay _screenPlay;
+        private SamplerState _samplerState = SamplerState.LinearWrap;
         public Game1()
         {
             WindowManager.Init(this, Screen.Width, Screen.Height);
@@ -52,6 +56,8 @@ namespace ShootThemAll
             _screenPlay = new ScreenPlay(this);
 
             ScreenManager.Init(_screenPlay, Enums.GetList<Layers>());
+            ScreenManager.SetLayerParameter((int)Layers.Main, blendState: BlendState.AlphaBlend, samplerState : _samplerState);
+            ScreenManager.SetLayerParameter((int)Layers.FrontFX, blendState: BlendState.Additive, samplerState: _samplerState);
 
             G.TexLine = GFX.CreateLineTextureAA(GraphicsDevice, 100, 10, 5);
             G.TexCircle = GFX.CreateCircleTextureAA(GraphicsDevice, 100, 5);
@@ -61,6 +67,7 @@ namespace ShootThemAll
         protected override void LoadContent()
         {
             G.FontMain = Content.Load<SpriteFont>("Fonts/FontMain");
+            G.TexCG00 = Content.Load<Texture2D>("Images/CG00");
         }
 
         protected override void Update(GameTime gameTime)
@@ -84,7 +91,7 @@ namespace ShootThemAll
         protected override void Draw(GameTime gameTime)
         {
             ScreenManager.DrawScreen(gameTime);
-            ScreenManager.ShowScreen(gameTime, sortMode: SpriteSortMode.Deferred, blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp);
+            ScreenManager.ShowScreen(gameTime, sortMode: SpriteSortMode.Deferred, blendState: BlendState.AlphaBlend, samplerState: _samplerState);
 
             base.Draw(gameTime);
         }

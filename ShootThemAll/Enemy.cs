@@ -31,7 +31,7 @@ namespace ShootThemAll
 
         public Shake Shake = new Shake();
 
-        int _energy = 32;
+        int _energy = 16;
         float _speed = 2f;
 
 
@@ -58,32 +58,26 @@ namespace ShootThemAll
         {
             UpdateCollideZone(ZoneBody, _rect);
 
-            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bullet>(), Bullet.ZoneBody);
+            var collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bullet>(), Bullet.ZoneBody);
 
-            if (colliders.Count > 0)
+            if (collider != null)
             {
-                foreach (var collider in colliders)
+                Bullet bullet = (Bullet)collider._node;
+                if (bullet != null)
                 {
-                    Bullet bullet = (Bullet)collider._node;
-                    if (bullet != null)
-                    {
-                        // Handle collision with the bullet
-                        //Console.WriteLine("Enemy hit by bullet!");
+                    AddEnergy(-bullet.Power);
 
-                        AddEnergy(-bullet.Power);
+                    Vector2 impact = new Vector2(bullet.AbsXY.X, AbsXY.Y + _oY);
 
-                        Vector2 impact = new Vector2(AbsXY.X - _oX, bullet.AbsXY.Y);
+                    new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
+                    new FxExplose(impact, Color.Yellow, 10, 20, 40).AppendTo(_parent);
+                    bullet.KillMe();
 
-                        new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
-                        new FxExplose(impact, Color.Yellow, 10, 20, 40).AppendTo(_parent);
-                        bullet.KillMe();
+                    Shake.SetIntensity(8f, 1f);
 
-                        Shake.SetIntensity(8f, 1f);
+                    _state.Set(States.Hit);
+                    _timer.Start(Timers.Hit);
 
-                        _state.Set(States.Hit);
-                        _timer.Start(Timers.Hit);
-
-                    }
                 }
             }
         }
@@ -93,11 +87,11 @@ namespace ShootThemAll
             _ticWave += 0.1f;
             _wave = (float)Math.Sin(_ticWave) * 2f;
 
-            _y += _wave;
-            _x -= speed;
-            if (_x <= 0)
+            _x += _wave;
+            _y += speed;
+            if (_y > Screen.Height)
             {
-                _x = Screen.Width;
+                _y = 0;
             }
         }
         private void RunState()
@@ -114,8 +108,7 @@ namespace ShootThemAll
                     Move(_speed/2);
                     if (_energy <= 0)
                     {
-                        new FxExplose(AbsXY, Color.Red, 20, 40, 50).AppendTo(_parent);
-                        KillMe();
+                        DestroyMe();
                     }
 
                     if (_timer.On(Timers.Hit))
@@ -132,6 +125,11 @@ namespace ShootThemAll
                     // Handle shoot state
                     break;
             }
+        }
+        public void DestroyMe()
+        {
+            new FxExplose(AbsXY, Color.Red, 20, 40, 50).AppendTo(_parent);
+            KillMe();
         }
         public override Node Update(GameTime gameTime)
         {

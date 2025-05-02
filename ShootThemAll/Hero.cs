@@ -26,7 +26,12 @@ namespace ShootThemAll
         }
         Timer<Timers> _timer = new Timer<Timers>();
 
+        public const int ZoneBody = 0;
+
+        private int _energy = 16;
+
         PlayerIndex _playerIndex;
+        Vector2 _accMove = new Vector2(); // Acceleration/Deceleration du mouvement du joueur si il utilise le clavier
         Vector2 _stickLeft;
         Vector2 _stickRight;
 
@@ -36,8 +41,10 @@ namespace ShootThemAll
             _type = UID.Get<Hero>();
 
             _playerIndex = playerIndex;
-            SetSize(64, 64);
+            SetSize(48, 48);
             SetPivot(Position.CENTER);
+
+            SetCollideZone(ZoneBody, _rect);
 
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, 0.1f), true);
             _timer.Start(Timers.Shoot);
@@ -50,10 +57,22 @@ namespace ShootThemAll
 
             if (_playerIndex == PlayerIndex.One)
             {
-                if (G.Key.IsKeyDown(Keys.Up)) _stickLeft.Y = 1;
-                if (G.Key.IsKeyDown(Keys.Down)) _stickLeft.Y = -1;
-                if (G.Key.IsKeyDown(Keys.Left)) _stickLeft.X = -1;
-                if (G.Key.IsKeyDown(Keys.Right)) _stickLeft.X = 1;
+                if (!G.Key.IsKeyDown(Keys.Up) && _accMove.Y > 0) _accMove.Y = 0f;
+                if (!G.Key.IsKeyDown(Keys.Down) && _accMove.Y < 0) _accMove.Y = 0f;
+
+                if (!G.Key.IsKeyDown(Keys.Left) && _accMove.X < 0) _accMove.X = 0f;
+                if (!G.Key.IsKeyDown(Keys.Right) && _accMove.X > 0) _accMove.X = 0f;
+
+                if (G.Key.IsKeyDown(Keys.Up)) _accMove.Y += .1f;
+                if (G.Key.IsKeyDown(Keys.Down)) _accMove.Y += -.1f;
+                if (G.Key.IsKeyDown(Keys.Left)) _accMove.X += -.1f;
+                if (G.Key.IsKeyDown(Keys.Right)) _accMove.X += .1f;
+
+                _stickLeft.X = _accMove.X;
+                _stickLeft.Y = _accMove.Y;
+
+                _stickLeft.X = float.Clamp(_stickLeft.X, -1, 1);
+                _stickLeft.Y = float.Clamp(_stickLeft.Y, -1, 1);
 
                 if (Math.Abs(_stickLeft.X) > 0 && Math.Abs(_stickLeft.Y) > 0)
                 {
@@ -74,11 +93,31 @@ namespace ShootThemAll
             if (_timer.On(Timers.Shoot))
             {
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
-                angle += Geo.RAD_0;
+                angle += -Geo.RAD_90;
 
                 Bullet bullet = new Bullet(XY, angle, 24);
                 bullet.AppendTo(_parent);
             }
+        }
+        private void HandleCollision()
+        {
+            UpdateCollideZone(ZoneBody, _rect);
+
+            var collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Enemy>(), Enemy.ZoneBody);
+
+
+            if (collider != null)
+            {
+                var enemy = collider._node as Enemy;
+                if (enemy != null)
+                {
+                    enemy.DestroyMe();
+                    //Console.WriteLine($"Hit {bullet.Power}");
+                    //AddEnergy(bullet.Power);
+                    //bullet.KillMe();
+                }
+            }
+
         }
         public override Node Update(GameTime gameTime)
         {
@@ -86,6 +125,7 @@ namespace ShootThemAll
             UpdateRect();
 
             HandleInput();
+            HandleCollision();
 
             _x += _stickLeft.X * 10f;
             _y += -_stickLeft.Y * 10f;
@@ -97,10 +137,11 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.Main)
             {
                 batch.FillRectangle(AbsRectF, Color.Red);
-                batch.RectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Gold, 5f);
+                batch.RectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Gray * .75f, 5f);
 
                 batch.CenterStringXY(G.FontMain, "Hero", AbsXY, Color.White);
                 //batch.CenterStringXY(G.FontMain, $"{_stickLeft}", AbsRectF.TopCenter, Color.White);
+                batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
             }
 
