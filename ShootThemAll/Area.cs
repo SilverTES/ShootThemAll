@@ -48,9 +48,9 @@ namespace ShootThemAll
 
                 Vector2 pos = new Vector2(x, y);
 
-                Color color = new Color(Misc.Rng.Next(0, 255), Misc.Rng.Next(0, 255), Misc.Rng.Next(0, 255));
+                Color color = new Color(Misc.Rng.Next(100, 255), Misc.Rng.Next(100, 255), Misc.Rng.Next(100, 255));
 
-                AddStar(pos, color, Misc.Rng.Next(1, 5), Misc.Rng.Next(10, 15) / 10f);
+                AddStar(pos, color, Misc.Rng.Next(1, 5), Misc.Rng.Next(20, 40) / 10f);
             }
         }
 
@@ -104,6 +104,14 @@ namespace ShootThemAll
         bool _isPaused = false;
 
         StarManager _starManager = new StarManager();
+
+        readonly Hero _hero;
+
+        Vector2 _gridPos = new Vector2(0, 0);
+        float _cellSize = 50f;
+
+        private RasterizerState scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
+
         public Area() 
         {
             SetSize(1000, Screen.Height);
@@ -120,6 +128,9 @@ namespace ShootThemAll
             _timer.Start(Timers.SpawnEnemy);
             _timer.Start(Timers.SpawnBonus);
 
+            _hero = new Hero(PlayerIndex.One);
+            _hero.SetPosition(_rect.Width / 2, _rect.Height - 200);
+            _hero.AppendTo(this);
 
             new Bonus().SetPosition(200, 200).AppendTo(this);
             new Bonus().SetPosition(400, 400).AppendTo(this);
@@ -127,7 +138,7 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnEnemy, () =>
             {
-                Enemy enemy = new Enemy(Misc.Rng.Next(1, 4));
+                Enemy enemy = new Enemy(Misc.Rng.Next(1, 4), _hero);
 
                 int border = 80;
 
@@ -152,7 +163,7 @@ namespace ShootThemAll
             });
 
 
-            _starManager.GenerateStar(200, new Rectangle(0, 0, (int)_rect.Width, (int)_rect.Height));
+            _starManager.GenerateStar(400, new Rectangle(0, 0, (int)_rect.Width, (int)_rect.Height));
         }
         public override Node Update(GameTime gameTime)
         {
@@ -168,6 +179,16 @@ namespace ShootThemAll
                 return base.Update(gameTime);
             }
 
+            _gridPos.Y += 4f;
+
+            if (_gridPos.Y >= 0)
+            {
+                _gridPos.Y = -_cellSize;
+            }
+
+            _hero._x = MathHelper.Clamp(_hero._x, _hero._oX, _rect.Width - _hero._oX);
+            _hero._y = MathHelper.Clamp(_hero._y, _hero._oY, _rect.Height - _hero._oY);
+
             _starManager.UpdateStars();
 
             _timer.Update();
@@ -179,6 +200,19 @@ namespace ShootThemAll
         public override Node Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
         {
 
+            // Sauvegarder l'état actuel
+            RasterizerState previousRasterizerState = batch.GraphicsDevice.RasterizerState;
+            Rectangle previousScissorRectangle = batch.GraphicsDevice.ScissorRectangle;
+            // Définir le rectangle de clipping
+            //Rectangle scissorRect = new Rectangle(50, 50, 200, 150);
+            // Dessin avec ScissorRectangle
+            batch.End();
+            
+            var param = ScreenManager.GetLayerParameter(indexLayer);
+
+            batch.Begin(rasterizerState: scissorRasterizerState, blendState: param.blendState);
+            batch.GraphicsDevice.ScissorRectangle = AbsRect;
+
 
             if (indexLayer == (int)Layers.Back)
             {
@@ -187,6 +221,8 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.Main)
             {
+                batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .25f, 1f); 
+
                 batch.FillRectangle(AbsRectF, Color.Black * .5f);
             }
 
@@ -205,6 +241,17 @@ namespace ShootThemAll
             }
 
             DrawChilds(batch, gameTime, indexLayer);
+
+
+
+            batch.End();
+            // Restaurer l'état précédent
+            batch.GraphicsDevice.RasterizerState = previousRasterizerState;
+            batch.GraphicsDevice.ScissorRectangle = previousScissorRectangle;
+            // Dessin supplémentaire (retour à l'état normal)
+            batch.Begin();
+
+
 
             return base.Draw(batch, gameTime, indexLayer);
         }

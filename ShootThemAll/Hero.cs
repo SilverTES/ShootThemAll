@@ -28,7 +28,9 @@ namespace ShootThemAll
 
         public const int ZoneBody = 0;
 
-        private int _energy = 16;
+        private int _maxEnergy = 40;
+        private int _energy = 40;
+
         private float _fireSpeed = 0.4f;   
 
         PlayerIndex _playerIndex;
@@ -37,6 +39,9 @@ namespace ShootThemAll
         Vector2 _stickRight;
 
         GamePadState _gamePadState;
+
+        Shake Shake = new Shake();
+
         public Hero(PlayerIndex playerIndex)
         {
             _type = UID.Get<Hero>();
@@ -53,6 +58,9 @@ namespace ShootThemAll
         public void SetFireSpeed(float fireSpeed)
         {
             _fireSpeed = fireSpeed;
+
+            _fireSpeed = Math.Clamp(_fireSpeed, 0.05f, 2f); // Clamp entre 0.1 et 2 secondes
+
             Console.WriteLine($"_fireSpeed = {_fireSpeed}");
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
         }
@@ -162,7 +170,29 @@ namespace ShootThemAll
                 //batch.CenterStringXY(G.FontMain, $"{_fireSpeed:F3}", AbsRectF.TopCenter, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
+
+
+                //Color fg = Color.GreenYellow;
+                //Color bg = Color.Green;
+
+                //if (_energy <= 10)
+                //{
+                //    fg = Color.Yellow;
+                //    bg = Color.Red;
+                //}
+
+                //GFX.Bar(batch, pos, _maxEnergy, 8, Color.Red * _alpha);
+                //GFX.Bar(batch, pos, _energy, 8, fg * _alpha);
+                //GFX.BarLines(batch, pos, _maxEnergy, 8, Color.Black * _alpha, 2);
+                //GFX.Bar(batch, pos - Vector2.UnitY * 2f, _maxEnergy, 2, Color.White * .5f * _alpha);
+
+                Vector2 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;
+                G.DrawEnergyBar(batch, pos, _energy, _maxEnergy, _alpha,  1f, 10f);
+
+                //batch.CenterBorderedStringXY(G.FontMain, $"{_energy}", AbsRectF.TopLeft - Vector2.One * 10 + Shake.GetVector2() * .5f, fg * _alpha, bg * _alpha);
+
             }
+
 
             if (indexLayer == (int)Layers.FrontFX)
             {

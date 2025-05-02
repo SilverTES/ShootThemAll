@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Mugen.Core;
@@ -49,6 +50,23 @@ namespace ShootThemAll
         public static SoundEffect SoundBonus;
 
         public static Song MusicTest;
+
+        public static void DrawEnergyBar(SpriteBatch batch, Vector2 pos, float energy, float maxEnergy, float alpha,  float scale = 1f, float warningEnergy = 10f)
+        {
+            Color fg = Color.GreenYellow;
+            Color bg = Color.Green;
+
+            if (energy <= warningEnergy)
+            {
+                fg = Color.Yellow;
+                bg = Color.Red;
+            }
+
+            GFX.Bar(batch, pos, maxEnergy * scale, 8, Color.Red * alpha);
+            GFX.Bar(batch, pos, energy * scale, 8, fg * alpha);
+            GFX.BarLines(batch, pos, maxEnergy * scale, 8, Color.Black * alpha, 2);
+            GFX.Bar(batch, pos - Vector2.UnitY * 2f, maxEnergy * scale, 2, Color.White * .5f * alpha);
+        }
 
     }
 

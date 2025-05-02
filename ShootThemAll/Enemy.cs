@@ -31,7 +31,8 @@ namespace ShootThemAll
 
         public Shake Shake = new Shake();
 
-        int _energy = 40;
+        int _maxEnergy = 30;
+        int _energy = 30;
         EasingValue _easeEnergy;
 
         float _speed = 2f;
@@ -39,10 +40,12 @@ namespace ShootThemAll
 
         float _ticWave = 0f;
         float _wave = 0f;
-        public Enemy(float speed)
+        Node _target;
+        public Enemy(float speed, Node target)
         {
             _type = UID.Get<Enemy>();
             _speed = speed;
+            _target = target;
             _easeEnergy = new EasingValue(_energy);
 
             SetSize(64, 64);
@@ -59,7 +62,7 @@ namespace ShootThemAll
             _timer.On(Timers.Shoot, () => 
             {
                 //Console.WriteLine("Shoooot");
-                Shoot();
+                Shoot(_target.XY);
                 _state.Change(States.Shoot);
 
                 float time = Misc.Rng.Next(10, 30) / 10f;
@@ -82,7 +85,7 @@ namespace ShootThemAll
             _state.On(States.Shoot, () =>
             {
                 _timer.Start(Timers.HasShoot);
-                Shake.SetIntensity(8f, 1f, false);
+                //Shake.SetIntensity(8f, 1f, false);
             });
 
         }
@@ -111,7 +114,7 @@ namespace ShootThemAll
                         Vector2 impact = new Vector2(bullet._x, _y + _oY);
 
                         new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
-                        new FxExplose(impact + _parent.XY, Color.Blue, 10, 20, 40).AppendTo(_parent);
+                        new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
                         bullet.KillMe();
 
                         Shake.SetIntensity(8f, 1f);
@@ -124,10 +127,12 @@ namespace ShootThemAll
                 }
             }
         }
-        public void Shoot()
+        public void Shoot(Vector2 target)
         {
             float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
-            angle += Geo.RAD_90;
+
+            //angle += Geo.RAD_90;
+            angle += Geo.GetRadian(XY, target);
 
             Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
             bullet.AppendTo(_parent);
@@ -136,7 +141,7 @@ namespace ShootThemAll
         {
             // Move logic here
             _ticWave += 0.1f;
-            _wave = (float)Math.Sin(_ticWave) * 1f;
+            _wave = (float)Math.Sin(_ticWave) * .5f;
 
             _x += _wave;
             _y += speed;
@@ -170,7 +175,7 @@ namespace ShootThemAll
                     break;
 
                 case States.Shoot:
-                    Move(_speed / 4);
+                    Move(_speed);
                     HandleCollision();
 
                     break;
@@ -180,8 +185,8 @@ namespace ShootThemAll
         {
             G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
 
-            new FxExplose(AbsXY, Color.Red, 20, 100, 50).AppendTo(_parent);
-            new FxExplose(AbsXY, Color.Gold, 10, 100, 50).AppendTo(_parent);
+            new FxExplose(AbsXY, Color.GreenYellow, 20, 100, 50, 10, .92f).AppendTo(_parent);
+            //new FxExplose(AbsXY, Color.Gold, 10, 100, 50).AppendTo(_parent);
 
             new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
 
@@ -216,8 +221,25 @@ namespace ShootThemAll
                 batch.RectangleCentered(pos, AbsRectF.GetSize(), _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
-                batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
-                batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
+                //batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
+                //batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
+
+                //Color fg = Color.GreenYellow;
+                //Color bg = Color.Green;
+
+                //if (_energy <= 10)
+                //{
+                //    fg = Color.Yellow;
+                //    bg = Color.Red;
+                //}
+
+                //GFX.Bar(batch, pos, _maxEnergy , 8, Color.Red * _alpha);
+                //GFX.Bar(batch, pos, _easeEnergy.Value , 8, fg * _alpha);
+                //GFX.BarLines(batch, pos, _maxEnergy , 8, Color.Black * _alpha, 2);
+                //GFX.Bar(batch, pos - Vector2.UnitY * 2f, _maxEnergy, 2, Color.White * .5f * _alpha);
+
+                pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;
+                G.DrawEnergyBar(batch, pos, _easeEnergy.Value, _maxEnergy, _alpha, 1f, 10f);
             }
 
             return base.Draw(batch, gameTime, indexLayer);

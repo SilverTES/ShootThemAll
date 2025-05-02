@@ -76,6 +76,7 @@ namespace ShootThemAll
             }
             if (indexLayer == (int)Layers.FrontFX)
             {
+                GFX.Draw(batch, G.TexGlow1, _color * _alpha * .5f, 0, AbsXY, Position.CENTER, Vector2.One * .10f);
             }
 
             return base.Draw(batch, gameTime, indexLayer);

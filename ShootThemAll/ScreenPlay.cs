@@ -16,8 +16,6 @@ namespace ShootThemAll
         readonly Game _game;
         Area _area;
 
-        readonly Hero _hero;
-
         float _ticWave = 0f;
         float _wave = 0f;
 
@@ -29,12 +27,8 @@ namespace ShootThemAll
             SetSize(Screen.Width, Screen.Height);
 
             _area = new Area();
-            _area.SetPosition(240, 0);
+            _area.SetPosition(200, 0);
             _area.AppendTo(this);
-
-            _hero = new Hero(PlayerIndex.One);
-            _hero.SetPosition(_area._rect.Width / 2, _area._rect.Height - 200);
-            _hero.AppendTo(_area);
 
             // Play music at start !
             MediaPlayer.Play(G.MusicTest);
@@ -57,7 +51,7 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.Main)
             {
                 batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
-                batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
+                //batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
 
                 //batch.Draw(G.TexCG00, new Vector2(1200, _wave), Color.White * 1f);
                 //batch.Rectangle(((RectangleF)G.TexCG00.Bounds).Translate(new Vector2(1200, 0)), Color.White, 3f);
