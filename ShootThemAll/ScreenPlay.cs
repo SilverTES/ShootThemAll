@@ -29,7 +29,7 @@ namespace ShootThemAll
             SetSize(Screen.Width, Screen.Height);
 
             _area = new Area();
-            _area.SetPosition(400, 0);
+            _area.SetPosition(240, 0);
             _area.AppendTo(this);
 
             _hero = new Hero(PlayerIndex.One);

@@ -27,7 +27,9 @@ namespace ShootThemAll
         }
         public void DestroyMe()
         {
-            new FxExplose(XY + _parent.XY, Color.YellowGreen, 20, 100, 50).AppendTo(_parent);
+            //new FxExplose(XY + _parent.XY, Color.YellowGreen, 20, 100, 50).AppendTo(_parent);
+            new FxGlow(XY, Color.White, .05f, 40).AppendTo(_parent);
+
             G.SoundBonus.Play(.25f * G.Volume, 1f, 0f);
             KillMe();
         }
@@ -59,8 +61,8 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.Glow)
             {
 
-                GFX.Draw(batch, G.TexGlow1, Color.White * _alpha * .5f, 0, AbsXY, Position.CENTER, Vector2.One * .25f);
-                GFX.Draw(batch, G.TexCircleGlow, Color.White * _alpha * .5f, 0, AbsXY, Position.CENTER, Vector2.One * .075f);
+                GFX.Draw(batch, G.TexGlow1, Color.White * _alpha * .25f, 0, AbsXY, Position.CENTER, Vector2.One * .25f);
+                GFX.Draw(batch, G.TexCircleGlow, Color.White * _alpha * .25f, 0, AbsXY, Position.CENTER, Vector2.One * .075f);
             }
             return base.Draw(batch, gameTime, indexLayer);
         }

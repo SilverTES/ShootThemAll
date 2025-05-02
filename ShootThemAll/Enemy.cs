@@ -136,7 +136,7 @@ namespace ShootThemAll
         {
             // Move logic here
             _ticWave += 0.1f;
-            _wave = (float)Math.Sin(_ticWave) * 2f;
+            _wave = (float)Math.Sin(_ticWave) * 1f;
 
             _x += _wave;
             _y += speed;
@@ -170,6 +170,7 @@ namespace ShootThemAll
                     break;
 
                 case States.Shoot:
+                    Move(_speed / 4);
                     HandleCollision();
 
                     break;

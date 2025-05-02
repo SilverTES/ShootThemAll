@@ -105,7 +105,7 @@ namespace ShootThemAll
                 Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.BlueViolet, 100, 10);
                 bullet.AppendTo(_parent);
 
-                new FxGlow(XY - Vector2.UnitY * _oY, Color.White, .025f, 40).AppendTo(_parent);
+                new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
 
                 G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
             }
@@ -132,7 +132,7 @@ namespace ShootThemAll
                 if (bonus != null)
                 {
                     bonus.DestroyMe();
-                    SetFireSpeed(_fireSpeed * 0.95f); // deux fois plus rapide + 5% de la vitesse
+                    SetFireSpeed(_fireSpeed * (1f - 1f/10)); // 10% de la vitesse
                 }
             }
 
@@ -159,7 +159,7 @@ namespace ShootThemAll
 
                 //batch.CenterStringXY(G.FontMain, "Hero", AbsXY, Color.White);
                 //batch.CenterStringXY(G.FontMain, $"{_stickLeft}", AbsRectF.TopCenter, Color.White);
-                batch.CenterStringXY(G.FontMain, $"{_fireSpeed:F3}", AbsRectF.TopCenter, Color.White);
+                //batch.CenterStringXY(G.FontMain, $"{_fireSpeed:F3}", AbsRectF.TopCenter, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
             }
