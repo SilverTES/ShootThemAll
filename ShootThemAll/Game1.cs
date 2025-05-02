@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using Mugen.Core;
 using Mugen.GFX;
 using Mugen.Input;
@@ -13,6 +15,7 @@ namespace ShootThemAll
         Main,
         Front,
         FrontFX,
+        Glow,
         UI,
         Debug,
     }
@@ -35,6 +38,16 @@ namespace ShootThemAll
         public static Texture2D TexCircle;
 
         public static Texture2D TexCG00;
+        public static Texture2D TexGlow1;
+        public static Texture2D TexCircleGlow;
+
+        public static float Volume = 0.5f;
+
+        public static SoundEffect SoundBim;
+        public static SoundEffect SoundHit;
+        public static SoundEffect SoundExplose;
+
+        public static Song MusicTest;
 
     }
 
@@ -53,21 +66,31 @@ namespace ShootThemAll
 
         protected override void Initialize()
         {
+            base.Initialize();
+
             _screenPlay = new ScreenPlay(this);
 
             ScreenManager.Init(_screenPlay, Enums.GetList<Layers>());
             ScreenManager.SetLayerParameter((int)Layers.Main, blendState: BlendState.AlphaBlend, samplerState : _samplerState);
             ScreenManager.SetLayerParameter((int)Layers.FrontFX, blendState: BlendState.Additive, samplerState: _samplerState);
+            ScreenManager.SetLayerParameter((int)Layers.Glow, blendState: BlendState.Additive, samplerState: _samplerState);
 
             G.TexLine = GFX.CreateLineTextureAA(GraphicsDevice, 100, 10, 5);
             G.TexCircle = GFX.CreateCircleTextureAA(GraphicsDevice, 100, 5);
-            base.Initialize();
         }
 
         protected override void LoadContent()
         {
             G.FontMain = Content.Load<SpriteFont>("Fonts/FontMain");
             G.TexCG00 = Content.Load<Texture2D>("Images/CG00");
+            G.TexGlow1 = Content.Load<Texture2D>("Images/glow1");
+            G.TexCircleGlow = Content.Load<Texture2D>("Images/circleGlow1");
+
+            G.SoundBim = Content.Load<SoundEffect>("Sounds/laser-pistol-gun");
+            G.SoundHit = Content.Load<SoundEffect>("Sounds/ingame_door_close");
+            G.SoundExplose = Content.Load<SoundEffect>("Sounds/Explosion");
+
+            G.MusicTest = Content.Load<Song>("Musics/destinazione_altrove_-_Kalte_Ohren_(_Remix_)");
         }
 
         protected override void Update(GameTime gameTime)

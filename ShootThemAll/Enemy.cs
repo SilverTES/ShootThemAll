@@ -14,7 +14,6 @@ namespace ShootThemAll
         {
             Idle,
             Hit,
-            Move,
             Shoot,
         }
         public States CurState => _state.CurState;
@@ -23,7 +22,8 @@ namespace ShootThemAll
         public enum Timers
         {
             Hit,
-            Move,
+            Shoot,
+            HasShoot,
         }
         Timer<Timers> _timer = new Timer<Timers>();
 
@@ -31,7 +31,7 @@ namespace ShootThemAll
 
         public Shake Shake = new Shake();
 
-        int _energy = 16;
+        int _energy = 6;
         float _speed = 2f;
 
 
@@ -47,7 +47,34 @@ namespace ShootThemAll
             SetCollideZone(ZoneBody, _rect);
 
             _timer.Set(Timers.Hit, Timer.Time(0, 0, 0.1f));
-            
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 1.5f));
+            _timer.Set(Timers.HasShoot, Timer.Time(0, 0, .25f));
+
+            _timer.Start(Timers.Shoot);
+
+            _timer.On(Timers.Shoot, () => 
+            {
+                //Console.WriteLine("Shoooot");
+                Shoot();
+                _state.Change(States.Shoot);
+
+                float time = Misc.Rng.Next(10, 30) / 10f;
+                _timer.Set(Timers.Shoot, Timer.Time(0, 0, time), true);
+            });
+
+            _timer.On(Timers.HasShoot, () =>
+            {
+                _state.Change(States.Idle);
+                _timer.Stop(Timers.HasShoot);
+            });
+
+
+            _state.On(States.Shoot, () =>
+            {
+                _timer.Start(Timers.HasShoot);
+                Shake.SetIntensity(8f, 1f, false);
+            });
+
         }
         public void AddEnergy(int energy)
         {
@@ -65,21 +92,33 @@ namespace ShootThemAll
                 Bullet bullet = (Bullet)collider._node;
                 if (bullet != null)
                 {
-                    AddEnergy(-bullet.Power);
+                    if (bullet.Owner != this)
+                    {
+                        AddEnergy(-bullet.Power);
 
-                    Vector2 impact = new Vector2(bullet.AbsXY.X, AbsXY.Y + _oY);
+                        Vector2 impact = new Vector2(bullet._x, _y + _oY);
 
-                    new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
-                    new FxExplose(impact, Color.Yellow, 10, 20, 40).AppendTo(_parent);
-                    bullet.KillMe();
+                        new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
+                        new FxExplose(impact + _parent.XY, Color.Blue, 10, 20, 40).AppendTo(_parent);
+                        bullet.KillMe();
 
-                    Shake.SetIntensity(8f, 1f);
+                        Shake.SetIntensity(8f, 1f);
 
-                    _state.Set(States.Hit);
-                    _timer.Start(Timers.Hit);
+                        _state.Set(States.Hit);
+                        _timer.Start(Timers.Hit);
 
+                        G.SoundHit.Play(0.1f * G.Volume, .5f, 0f);
+                    }
                 }
             }
+        }
+        public void Shoot()
+        {
+            float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
+            angle += Geo.RAD_90;
+
+            Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
+            bullet.AppendTo(_parent);
         }
         private void Move(float speed)
         {
@@ -118,9 +157,6 @@ namespace ShootThemAll
                     }
 
                     break;
-                case States.Move:
-                    // Handle move state
-                    break;
                 case States.Shoot:
                     // Handle shoot state
                     break;
@@ -128,7 +164,12 @@ namespace ShootThemAll
         }
         public void DestroyMe()
         {
-            new FxExplose(AbsXY, Color.Red, 20, 40, 50).AppendTo(_parent);
+            G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
+
+            new FxExplose(AbsXY, Color.Red, 20, 100, 50).AppendTo(_parent);
+            new FxExplose(AbsXY, Color.Gold, 10, 100, 50).AppendTo(_parent);
+
+            new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
             KillMe();
         }
         public override Node Update(GameTime gameTime)
@@ -152,14 +193,12 @@ namespace ShootThemAll
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.Green, 0);
                 else if (_state.Is(States.Hit))
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.DarkGreen, 0);
-                else if (_state.Is(States.Move))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.Blue, 0);
                 else if (_state.Is(States.Shoot))
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.Red, 0);
                 
-                batch.RectangleCentered(pos, AbsRectF.GetSize(), _state.Is(States.Hit)? Color.White:Color.Black, 5f);
+                batch.RectangleCentered(pos, AbsRectF.GetSize(), _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
-                batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
+                //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Yellow);
             }

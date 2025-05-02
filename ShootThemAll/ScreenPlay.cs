@@ -1,78 +1,50 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using Mugen.Core;
 using Mugen.Event;
 using Mugen.GFX;
 using Mugen.Input;
 using Mugen.Physics;
+using System;
 
 namespace ShootThemAll
 {
     public class ScreenPlay : Node
     {
-        public enum Timers
-        {
-            SpawnEnemy,
-        }
-        Timer<Timers> _timer = new Timer<Timers>();
-
         readonly Game _game;
+        Area _area;
+
         readonly Hero _hero;
 
-        Collision2DGrid _grid;
-
-        bool _isPaused = false;
-
-        RectangleF _rectArea = new RectangleF(0, 0, 1200, Screen.Height);
-
+        float _ticWave = 0f;
+        float _wave = 0f;
         public ScreenPlay(Game game)
         {
             _game = game;
             
             SetSize(Screen.Width, Screen.Height);
 
+            _area = new Area();
+            _area.SetPosition(400, 0);
+            _area.AppendTo(this);
+
             _hero = new Hero(PlayerIndex.One);
-            _hero.SetPosition(Screen.Width/2, Screen.Height - 200);
-            _hero.AppendTo(this);
+            _hero.SetPosition(_area._rect.Width / 2, _area._rect.Height - 200);
+            _hero.AppendTo(_area);
 
-            int cellSize = 80;
-            int gridWidth = Screen.Width / cellSize;
-            int gridHeight = Screen.Height / cellSize;
-
-            _grid = new Collision2DGrid(gridWidth, gridHeight, cellSize);
-
-            _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, 3f), true);
-            _timer.Start(Timers.SpawnEnemy);
+            // Play music at start !
+            MediaPlayer.Play(G.MusicTest);
+            MediaPlayer.Volume = 0.1f * G.Volume;
+            MediaPlayer.IsRepeating = true;
         }
         public override Node Update(GameTime gameTime)
         {
-
-            if (ButtonControl.OnePress("Pause", G.Key.IsKeyDown(Keys.P) || GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed))
-            {
-                _isPaused = !_isPaused;
-            }
-
-            if (_isPaused)
-            {
-                return base.Update(gameTime);
-            }
-
-            _timer.Update();
             UpdateChilds(gameTime);
 
-            _grid.UpdateGridSystemZone(this);
-
-            if (_timer.On(Timers.SpawnEnemy))
-            {
-                Enemy enemy = new Enemy(Misc.Rng.Next(1,5));
-                
-                enemy.SetPosition(Misc.Rng.Next((int)_rectArea.X, (int)(_rectArea.X + _rectArea.Width)), 0);
-                enemy.AppendTo(this);
-
-                float time = Misc.Rng.Next(10, 30) / 10f;
-                _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, time), true);
-            }
+            _ticWave += 0.1f;
+            _wave = (float)Math.Sin(_ticWave) * 4f;
 
             return base.Update(gameTime);
         }
@@ -85,20 +57,13 @@ namespace ShootThemAll
                 batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
                 batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
 
-                batch.FillRectangle(_rectArea, Color.Black * .5f);
-
-                //batch.Draw(G.TexCG00, new Vector2(1200, 0), Color.White * 1f);
-                batch.Rectangle(((RectangleF)G.TexCG00.Bounds).Translate(new Vector2(1200, 0)), Color.White, 3f);
+                //batch.Draw(G.TexCG00, new Vector2(1200, _wave), Color.White * 1f);
+                //batch.Rectangle(((RectangleF)G.TexCG00.Bounds).Translate(new Vector2(1200, 0)), Color.White, 3f);
             }
 
             if (indexLayer == (int)Layers.Front)
             {
-                if (_isPaused)
-                {
-                    //batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.Black * .5f);
-                    batch.FillRectangleCentered(AbsRectF.Center, new Vector2(300, 100), Color.Black * .5f, 0);
-                    batch.CenterStringXY(G.FontMain, "P A U S E", AbsRectF.Center, Color.White);
-                }
+
             }
 
             if (indexLayer == (int)Layers.Debug)

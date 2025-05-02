@@ -46,7 +46,7 @@ namespace ShootThemAll
 
             SetCollideZone(ZoneBody, _rect);
 
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 0.1f), true);
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 0.4f), true);
             _timer.Start(Timers.Shoot);
         }
         private void HandleInput()
@@ -55,7 +55,7 @@ namespace ShootThemAll
             _stickLeft = _gamePadState.ThumbSticks.Left;
             _stickRight = _gamePadState.ThumbSticks.Right;
 
-            if (_playerIndex == PlayerIndex.One)
+            if (_playerIndex == PlayerIndex.One && _stickLeft.Equals(Vector2.Zero))
             {
                 if (!G.Key.IsKeyDown(Keys.Up) && _accMove.Y > 0) _accMove.Y = 0f;
                 if (!G.Key.IsKeyDown(Keys.Down) && _accMove.Y < 0) _accMove.Y = 0f;
@@ -95,8 +95,10 @@ namespace ShootThemAll
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
                 angle += -Geo.RAD_90;
 
-                Bullet bullet = new Bullet(XY, angle, 24);
+                Bullet bullet = new Bullet(this, XY, angle, 24, Color.BlueViolet);
                 bullet.AppendTo(_parent);
+
+                G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
             }
         }
         private void HandleCollision()
@@ -139,10 +141,15 @@ namespace ShootThemAll
                 batch.FillRectangle(AbsRectF, Color.Red);
                 batch.RectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Gray * .75f, 5f);
 
-                batch.CenterStringXY(G.FontMain, "Hero", AbsXY, Color.White);
+                //batch.CenterStringXY(G.FontMain, "Hero", AbsXY, Color.White);
                 //batch.CenterStringXY(G.FontMain, $"{_stickLeft}", AbsRectF.TopCenter, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
+            }
+
+            if (indexLayer == (int)Layers.FrontFX)
+            {
+                //batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, 0), 5f, Color.Red * .5f);
             }
 
             return base.Draw(batch, gameTime, indexLayer);

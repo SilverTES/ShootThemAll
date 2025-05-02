@@ -18,8 +18,12 @@ namespace ShootThemAll
         int _lifeTime;
         public int Power => _power;
         int _power;
-        public Bullet(Vector2 position, float angle, float speed, int lifeTime = 100, int power = 3)
+
+        public Node Owner;
+        Color _color;
+        public Bullet(Node owner, Vector2 position, float angle, float speed, Color color, int lifeTime = 100, int power = 3)
         {
+            Owner = owner;
             _type = UID.Get<Bullet>();
 
             SetPosition(position.X, position.Y);
@@ -28,6 +32,7 @@ namespace ShootThemAll
             _speed = speed;
             _lifeTime = lifeTime;
             _power = power;
+            _color = color;
 
             SetSize(10, 10);
             SetPivot(Position.CENTER);
@@ -65,21 +70,12 @@ namespace ShootThemAll
         {
             if (indexLayer == (int)Layers.Main)
             {
-                //batch.FillRectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Yellow, 0);
-
-                batch.FilledCircle(G.TexCircle, AbsXY, 13, Color.Blue);
-                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 15, Color.Blue);
-                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 7, Color.LightBlue);
-                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 3, Color.Cyan);
+                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 15, _color * .5f);
+                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 7,_color * .75f);
+                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 3, _color * 1f);
             }
             if (indexLayer == (int)Layers.FrontFX)
             {
-                //batch.FillRectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Yellow, 0);
-
-                batch.FilledCircle(G.TexCircle, AbsXY, 13, Color.Red * .5f);
-                batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 15, Color.Red * .5f);
-                //batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 7, Color.LightBlue);
-                //batch.LineTexture(G.TexLine, AbsXY, AbsXY - _velocity * 2, 3, Color.Cyan);
             }
 
             return base.Draw(batch, gameTime, indexLayer);
