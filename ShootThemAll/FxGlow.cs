@@ -10,24 +10,27 @@ namespace ShootThemAll
     {
         float _size = 1f;
         int _lifeTime = 100;
+        float _speed = 1f;
 
         Color _color;
 
-        public FxGlow(Vector2 position, Color color, float size = 1f)
+        public FxGlow(Vector2 position, Color color, float size = 1f, int lifeTime = 100, float speed = 1f)
         {
             _x = position.X;
             _y = position.Y;
             _size = size;
             _color = color;
+            _speed = speed;
 
             _alpha = 1f;
+            _lifeTime = lifeTime;
         }
         public override Node Update(GameTime gameTime)
         {
             UpdateRect();
 
-            _alpha -= .025f;
-            _size *= 1.05f;
+            _alpha -= .025f * _speed;
+            _size *= 1.05f * _speed;
 
             _lifeTime--;
             if (_lifeTime <= 0)

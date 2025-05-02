@@ -95,8 +95,10 @@ namespace ShootThemAll
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
                 angle += -Geo.RAD_90;
 
-                Bullet bullet = new Bullet(this, XY, angle, 24, Color.BlueViolet);
+                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.BlueViolet);
                 bullet.AppendTo(_parent);
+
+                new FxGlow(XY - Vector2.UnitY * _oY, Color.White, .025f, 40).AppendTo(_parent);
 
                 G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
             }

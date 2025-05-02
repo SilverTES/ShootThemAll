@@ -194,7 +194,7 @@ namespace ShootThemAll
                 else if (_state.Is(States.Hit))
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.DarkGreen, 0);
                 else if (_state.Is(States.Shoot))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.Red, 0);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize(), Color.ForestGreen, 0);
                 
                 batch.RectangleCentered(pos, AbsRectF.GetSize(), _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
