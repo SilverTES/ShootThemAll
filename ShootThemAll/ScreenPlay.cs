@@ -20,6 +20,8 @@ namespace ShootThemAll
 
         float _ticWave = 0f;
         float _wave = 0f;
+
+        
         public ScreenPlay(Game game)
         {
             _game = game;

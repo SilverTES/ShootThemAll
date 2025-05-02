@@ -31,7 +31,9 @@ namespace ShootThemAll
 
         public Shake Shake = new Shake();
 
-        int _energy = 6;
+        int _energy = 40;
+        EasingValue _easeEnergy;
+
         float _speed = 2f;
 
 
@@ -41,6 +43,8 @@ namespace ShootThemAll
         {
             _type = UID.Get<Enemy>();
             _speed = speed;
+            _easeEnergy = new EasingValue(_energy);
+
             SetSize(64, 64);
             SetPivot(Position.CENTER);
 
@@ -68,6 +72,12 @@ namespace ShootThemAll
                 _timer.Stop(Timers.HasShoot);
             });
 
+            _timer.On(Timers.Hit, () =>
+            {
+                _state.Change(States.Idle);
+                _timer.Stop(Timers.Hit);
+            });
+
 
             _state.On(States.Shoot, () =>
             {
@@ -79,6 +89,8 @@ namespace ShootThemAll
         public void AddEnergy(int energy)
         {
             _energy += energy;
+            _easeEnergy.SetValue(_energy);
+
             _energy = Math.Clamp(_energy, 0, 100);
         }
         private void HandleCollision()
@@ -92,7 +104,7 @@ namespace ShootThemAll
                 Bullet bullet = (Bullet)collider._node;
                 if (bullet != null)
                 {
-                    if (bullet.Owner != this)
+                    if (bullet.Owner._type == UID.Get<Hero>())
                     {
                         AddEnergy(-bullet.Power);
 
@@ -138,27 +150,28 @@ namespace ShootThemAll
             switch (_state.CurState)
             {
                 case States.Idle:
-                    // Handle idle state
                     HandleCollision();
                     Move(_speed);
+
+                    if (_easeEnergy.Value <= 0)
+                    {
+                        DestroyMe();
+                    }
                     break;
+
                 case States.Hit:
-                    // Handle hit state
                     Move(_speed/2);
-                    if (_energy <= 0)
+                    
+                    if (_easeEnergy.Value <= 0)
                     {
                         DestroyMe();
                     }
 
-                    if (_timer.On(Timers.Hit))
-                    {
-                        _state.Set(States.Idle);
-                        _timer.Stop(Timers.Hit);
-                    }
-
                     break;
+
                 case States.Shoot:
-                    // Handle shoot state
+                    HandleCollision();
+
                     break;
             }
         }
@@ -170,11 +183,14 @@ namespace ShootThemAll
             new FxExplose(AbsXY, Color.Gold, 10, 100, 50).AppendTo(_parent);
 
             new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
+
             KillMe();
         }
         public override Node Update(GameTime gameTime)
         {
             _timer.Update();
+            _easeEnergy.Update(gameTime);
+
             UpdateRect();
 
             RunState();
@@ -200,7 +216,7 @@ namespace ShootThemAll
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
-                batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Yellow);
+                batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
             }
 
             return base.Draw(batch, gameTime, indexLayer);

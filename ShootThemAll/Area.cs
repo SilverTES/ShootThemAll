@@ -14,6 +14,7 @@ namespace ShootThemAll
         public enum Timers
         {
             SpawnEnemy,
+            SpawnBonus,
         }
         Timer<Timers> _timer = new Timer<Timers>();
 
@@ -21,6 +22,7 @@ namespace ShootThemAll
         Collision2DGrid _grid;
 
         bool _isPaused = false;
+
         public Area() 
         {
             SetSize(800, Screen.Height);
@@ -32,7 +34,14 @@ namespace ShootThemAll
             _grid = new Collision2DGrid(gridWidth, gridHeight, cellSize);
 
             _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, 3f), true);
+            _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, 10f), true);
+
             _timer.Start(Timers.SpawnEnemy);
+            _timer.Start(Timers.SpawnBonus);
+
+
+            new Bonus().SetPosition(200, 200).AppendTo(this);
+            new Bonus().SetPosition(400, 400).AppendTo(this);
 
 
             _timer.On(Timers.SpawnEnemy, () =>
@@ -47,10 +56,23 @@ namespace ShootThemAll
                 float time = Misc.Rng.Next(10, 30) / 10f;
                 _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, time), true);
             });
+
+            _timer.On(Timers.SpawnBonus, () =>
+            {
+                Bonus bonus = new();
+
+                int border = 80;
+
+                bonus.SetPosition(Misc.Rng.Next(border, (int)_rect.Width - border), 0);
+                bonus.AppendTo(this);
+
+                float time = Misc.Rng.Next(80, 120) / 10f;
+                _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, time), true);
+            });
+
         }
         public override Node Update(GameTime gameTime)
         {
-            _timer.Update();
             UpdateRect();
 
             if (ButtonControl.OnePress("Pause", G.Key.IsKeyDown(Keys.P) || GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed))
@@ -63,6 +85,7 @@ namespace ShootThemAll
                 return base.Update(gameTime);
             }
 
+            _timer.Update();
             UpdateChilds(gameTime);
             _grid.UpdateGridSystemZone(this);
 

@@ -29,6 +29,7 @@ namespace ShootThemAll
         public const int ZoneBody = 0;
 
         private int _energy = 16;
+        private float _fireSpeed = 0.4f;   
 
         PlayerIndex _playerIndex;
         Vector2 _accMove = new Vector2(); // Acceleration/Deceleration du mouvement du joueur si il utilise le clavier
@@ -46,8 +47,14 @@ namespace ShootThemAll
 
             SetCollideZone(ZoneBody, _rect);
 
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 0.4f), true);
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
             _timer.Start(Timers.Shoot);
+        }
+        public void SetFireSpeed(float fireSpeed)
+        {
+            _fireSpeed = fireSpeed;
+            Console.WriteLine($"_fireSpeed = {_fireSpeed}");
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
         }
         private void HandleInput()
         {
@@ -95,7 +102,7 @@ namespace ShootThemAll
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
                 angle += -Geo.RAD_90;
 
-                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.BlueViolet);
+                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.BlueViolet, 100, 10);
                 bullet.AppendTo(_parent);
 
                 new FxGlow(XY - Vector2.UnitY * _oY, Color.White, .025f, 40).AppendTo(_parent);
@@ -108,17 +115,24 @@ namespace ShootThemAll
             UpdateCollideZone(ZoneBody, _rect);
 
             var collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Enemy>(), Enemy.ZoneBody);
-
-
             if (collider != null)
             {
                 var enemy = collider._node as Enemy;
                 if (enemy != null)
                 {
                     enemy.DestroyMe();
-                    //Console.WriteLine($"Hit {bullet.Power}");
-                    //AddEnergy(bullet.Power);
-                    //bullet.KillMe();
+                    
+                }
+            }
+
+            collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bonus>(), Bonus.ZoneBody);
+            if (collider != null)
+            {
+                var bonus = collider._node as Bonus;
+                if (bonus != null)
+                {
+                    bonus.DestroyMe();
+                    SetFireSpeed(_fireSpeed * 0.95f); // deux fois plus rapide + 5% de la vitesse
                 }
             }
 
@@ -145,6 +159,7 @@ namespace ShootThemAll
 
                 //batch.CenterStringXY(G.FontMain, "Hero", AbsXY, Color.White);
                 //batch.CenterStringXY(G.FontMain, $"{_stickLeft}", AbsRectF.TopCenter, Color.White);
+                batch.CenterStringXY(G.FontMain, $"{_fireSpeed:F3}", AbsRectF.TopCenter, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
             }

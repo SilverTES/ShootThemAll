@@ -46,6 +46,7 @@ namespace ShootThemAll
         public static SoundEffect SoundBim;
         public static SoundEffect SoundHit;
         public static SoundEffect SoundExplose;
+        public static SoundEffect SoundBonus;
 
         public static Song MusicTest;
 
@@ -89,6 +90,7 @@ namespace ShootThemAll
             G.SoundBim = Content.Load<SoundEffect>("Sounds/laser-pistol-gun");
             G.SoundHit = Content.Load<SoundEffect>("Sounds/ingame_door_close");
             G.SoundExplose = Content.Load<SoundEffect>("Sounds/Explosion");
+            G.SoundBonus = Content.Load<SoundEffect>("Sounds/success_1");
 
             G.MusicTest = Content.Load<Song>("Musics/destinazione_altrove_-_Kalte_Ohren_(_Remix_)");
         }
