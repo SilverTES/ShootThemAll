@@ -65,6 +65,7 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.Debug)
             {
                 //_grid.Render(batch, G.FontMain, Color.Pink);
+                //batch.RectangleTarget(new RectangleF(20, 20, 120, 80), Color.Yellow, 20, 20, 5f);
             }
 
             DrawChilds(batch, gameTime, indexLayer);

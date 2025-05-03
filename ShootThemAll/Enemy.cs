@@ -13,10 +13,12 @@ namespace ShootThemAll
     {
         public static List<Color> Colors =
         [
-            Color.Red,
-            Color.Green,
-            Color.Blue,
-            Color.BlueViolet,
+            new Color(128, 0, 0),
+            new Color(0, 128, 0),
+            new Color(0, 0, 128),
+            new Color(128, 128, 0),
+            new Color(0, 128, 128),
+            new Color(128, 0, 128),
         ];
         public static Color RandomColor()
         {
@@ -232,9 +234,9 @@ namespace ShootThemAll
                 if (_state.Is(States.Idle))
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _color, 0);
                 else if (_state.Is(States.Hit))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier : 1.1f), 0);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier : 2.0f), 0);
                 else if (_state.Is(States.Shoot))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.2f), 0);
+                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.5f), 0);
                 else if (_state.Is(States.Dead))
                     batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.2f), 0);
 
@@ -243,20 +245,6 @@ namespace ShootThemAll
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
                 batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
-
-                //Color fg = Color.GreenYellow;
-                //Color bg = Color.Green;
-
-                //if (_energy <= 10)
-                //{
-                //    fg = Color.Yellow;
-                //    bg = Color.Red;
-                //}
-
-                //GFX.Bar(batch, pos, _maxEnergy , 8, Color.Red * _alpha);
-                //GFX.Bar(batch, pos, _easeEnergy.Value , 8, fg * _alpha);
-                //GFX.BarLines(batch, pos, _maxEnergy , 8, Color.Black * _alpha, 2);
-                //GFX.Bar(batch, pos - Vector2.UnitY * 2f, _maxEnergy, 2, Color.White * .5f * _alpha);
 
                 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;
                 G.DrawEnergyBar(batch, pos, _easeEnergy.Value, _maxEnergy, _alpha, 1f, 10f);

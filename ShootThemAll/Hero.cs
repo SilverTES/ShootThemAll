@@ -27,6 +27,7 @@ namespace ShootThemAll
         Timer<Timers> _timer = new Timer<Timers>();
 
         public const int ZoneBody = 0;
+        public const int ZoneCast = 1;
 
         private int _maxEnergy = 40;
         private int _energy = 40;
@@ -42,6 +43,12 @@ namespace ShootThemAll
 
         Shake Shake = new Shake();
 
+        Node _targetScan = null;
+        bool _isShowTarget = false;
+
+        float _ticWave = 0f;
+        float _wave = 0f;
+
         public Hero(PlayerIndex playerIndex)
         {
             _type = UID.Get<Hero>();
@@ -51,6 +58,7 @@ namespace ShootThemAll
             SetPivot(Position.CENTER);
 
             SetCollideZone(ZoneBody, _rect);
+            SetCollideZone(ZoneCast, _rect);
 
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
             _timer.Start(Timers.Shoot);
@@ -145,6 +153,38 @@ namespace ShootThemAll
                 }
             }
 
+
+
+            _targetScan = null;
+
+            UpdateCollideZone(ZoneCast, new RectangleF(_x, 0, 1, _y - _oY));
+
+            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), UID.Get<Enemy>(), Enemy.ZoneBody);
+
+            if (colliders.Count > 0)
+            {
+                float maxY = 0f;
+                for (int i = 0; i < colliders.Count; i++)
+                {
+                    Enemy enemy = colliders[i]._node as Enemy;
+                    if (enemy != null)
+                    {
+                        if (enemy._y > maxY)
+                        {
+                            maxY = enemy._y;
+                            _targetScan = enemy;
+                        }
+                        else
+                            continue;
+                        //enemy.DestroyMe();
+                        //Console.WriteLine("SCan found");
+                    }
+
+                }
+            }
+
+            _isShowTarget = _targetScan != null;
+
         }
         public override Node Update(GameTime gameTime)
         {
@@ -156,6 +196,9 @@ namespace ShootThemAll
 
             _x += _stickLeft.X * 10f;
             _y += -_stickLeft.Y * 10f;
+
+            _ticWave += 0.1f;
+            _wave = (float)Math.Abs(Math.Sin(_ticWave) * .25f);
 
             return base.Update(gameTime);
         }
@@ -172,21 +215,6 @@ namespace ShootThemAll
                 batch.CenterStringXY(G.FontMain, $"{_energy}", AbsRectF.BottomCenter, Color.Orange);
 
 
-
-                //Color fg = Color.GreenYellow;
-                //Color bg = Color.Green;
-
-                //if (_energy <= 10)
-                //{
-                //    fg = Color.Yellow;
-                //    bg = Color.Red;
-                //}
-
-                //GFX.Bar(batch, pos, _maxEnergy, 8, Color.Red * _alpha);
-                //GFX.Bar(batch, pos, _energy, 8, fg * _alpha);
-                //GFX.BarLines(batch, pos, _maxEnergy, 8, Color.Black * _alpha, 2);
-                //GFX.Bar(batch, pos - Vector2.UnitY * 2f, _maxEnergy, 2, Color.White * .5f * _alpha);
-
                 Vector2 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;
                 G.DrawEnergyBar(batch, pos, _energy, _maxEnergy, _alpha,  1f, 10f);
 
@@ -197,9 +225,24 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.FrontFX)
             {
-                //batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, 0), 5f, Color.Red * .5f);
+                if (_targetScan != null)
+                {
+                    batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 10f, Color.Red * 1f);
+                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 20, 20, 5f);
+                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Gold * .75f, 20, 20, 3f);
+                }
+                else
+                {
+                    batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, 0), 5f, Color.Red * .5f);
 
-                batch.FilledCircle(G.TexCircle, AbsXY, 10, Color.Gold * _alpha);
+                }
+
+                    batch.FilledCircle(G.TexCircle, AbsXY, 10, Color.Gold * _alpha);
+            }
+
+            if (indexLayer == (int)Layers.Debug)
+            {
+                //batch.Rectangle(GetCollideZone(ZoneCast)._rect, Color.Red * .5f);
             }
 
             return base.Draw(batch, gameTime, indexLayer);
