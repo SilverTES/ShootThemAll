@@ -68,7 +68,7 @@ namespace ShootThemAll
 
             _easeEnergy = new EasingValue(_energy);
 
-            SetSize(64, 64);
+            SetSize(48, 48);
             SetPivot(Position.CENTER);
 
             SetCollideZone(ZoneBody, _rect);
@@ -198,8 +198,11 @@ namespace ShootThemAll
                         _size = 0;
 
                         G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
-                        new FxExplose(AbsXY, Color.GreenYellow, 20, 100, 50, 10, .92f).AppendTo(_parent);
-                        new FxGlow(XY, Color.White, .1f).AppendTo(_parent);
+
+                        Color color = HSV.Adjust(_color, valueMultiplier: 1.5f);
+
+                        new FxExplose(AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
+                        new FxGlow(XY, color, .1f).AppendTo(_parent);
                         KillMe();
                     }
                     break;
@@ -243,7 +246,7 @@ namespace ShootThemAll
                 batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
-                batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
+                //batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
                 batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
 
                 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;

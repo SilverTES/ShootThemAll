@@ -38,6 +38,7 @@ namespace ShootThemAll
         public static Texture2D TexLine;
         public static Texture2D TexCircle;
 
+        public static Texture2D TexBG00;
         public static Texture2D TexCG00;
         public static Texture2D TexGlow1;
         public static Texture2D TexCircleGlow;
@@ -101,6 +102,9 @@ namespace ShootThemAll
         protected override void LoadContent()
         {
             G.FontMain = Content.Load<SpriteFont>("Fonts/FontMain");
+
+
+            G.TexBG00 = Content.Load<Texture2D>("Images/bg00");
             G.TexCG00 = Content.Load<Texture2D>("Images/CG00");
             G.TexGlow1 = Content.Load<Texture2D>("Images/glow1");
             G.TexCircleGlow = Content.Load<Texture2D>("Images/circleGlow1");

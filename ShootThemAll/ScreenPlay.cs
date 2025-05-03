@@ -27,7 +27,7 @@ namespace ShootThemAll
             SetSize(Screen.Width, Screen.Height);
 
             _area = new Area();
-            _area.SetPosition(240, 40);
+            _area.SetPosition(480, 80);
             _area.AppendTo(this);
 
             // Play music at start !
@@ -48,18 +48,23 @@ namespace ShootThemAll
         {
             batch.GraphicsDevice.Clear(Color.Transparent);
 
+            if (indexLayer == (int)Layers.Back)
+            {
+                batch.Draw(G.TexBG00, new Rectangle(0, 0, Screen.Width, Screen.Height), Color.White);
+            }
+
             if (indexLayer == (int)Layers.Main)
             {
                 batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
                 //batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
 
-                //batch.Draw(G.TexCG00, new Vector2(1200, _wave), Color.White * 1f);
+                //batch.Draw(G.TexCG00, new Vector2(1100, _wave), Color.White * 1f);
                 //batch.Rectangle(((RectangleF)G.TexCG00.Bounds).Translate(new Vector2(1200, 0)), Color.White, 3f);
             }
 
             if (indexLayer == (int)Layers.Front)
             {
-
+                batch.Rectangle(_area.AbsRectF.Extend(4), Color.Black * .5f, 3f);
             }
 
             if (indexLayer == (int)Layers.Debug)

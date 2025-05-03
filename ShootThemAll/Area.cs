@@ -71,6 +71,8 @@ namespace ShootThemAll
                 //    _stars[i] = star;
                 //}
 
+                star.Alpha = 1f - (1f / star.Speed) - .25f;
+
                 if (star.Position.Y > Screen.Height)
                 {
                     star.Position.Y = 0;
@@ -108,13 +110,13 @@ namespace ShootThemAll
         readonly Hero _hero;
 
         Vector2 _gridPos = new Vector2(0, 0);
-        float _cellSize = 40f;
+        float _cellSize = 80f;
 
         private RasterizerState scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
 
         public Area() 
         {
-            SetSize(960, Screen.Height - 80);
+            SetSize(640, 960);
 
             int cellSize = 80;
             int gridWidth = (int)_rect.Width / cellSize;
@@ -142,7 +144,7 @@ namespace ShootThemAll
 
                 int border = 80;
 
-                enemy.SetPosition(Misc.Rng.Next(border, (int)_rect.Width - border), 0);
+                enemy.SetPosition(Misc.Rng.Next(border, (int)_rect.Width - border), -100);
                 enemy.AppendTo(this);
 
                 float time = Misc.Rng.Next(10, 30) / 10f;
@@ -155,7 +157,7 @@ namespace ShootThemAll
 
                 int border = 80;
 
-                bonus.SetPosition(Misc.Rng.Next(border, (int)_rect.Width - border), 0);
+                bonus.SetPosition(Misc.Rng.Next(border, (int)_rect.Width - border), -100);
                 bonus.AppendTo(this);
 
                 float time = Misc.Rng.Next(80, 120) / 10f;
@@ -163,7 +165,7 @@ namespace ShootThemAll
             });
 
 
-            _starManager.GenerateStar(400, new Rectangle(0, 0, (int)_rect.Width, (int)_rect.Height));
+            _starManager.GenerateStar(100, new Rectangle(0, 0, (int)_rect.Width, (int)_rect.Height));
         }
         public override Node Update(GameTime gameTime)
         {
@@ -201,7 +203,7 @@ namespace ShootThemAll
         {
 
             // Sauvegarder l'état actuel
-            RasterizerState previousRasterizerState = batch.GraphicsDevice.RasterizerState;
+            //RasterizerState previousRasterizerState = batch.GraphicsDevice.RasterizerState;
             Rectangle previousScissorRectangle = batch.GraphicsDevice.ScissorRectangle;
             // Définir le rectangle de clipping
             //Rectangle scissorRect = new Rectangle(50, 50, 200, 150);
@@ -216,14 +218,15 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.Back)
             {
-                _starManager.DrawStars(batch, AbsXY);
             }
 
             if (indexLayer == (int)Layers.Main)
             {
-                batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .25f, 1f); 
+                batch.FillRectangle(AbsRectF, Color.Black * 1f);
 
-                batch.FillRectangle(AbsRectF, Color.Black * .5f);
+                _starManager.DrawStars(batch, AbsXY);
+                batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .1f, 1f);
+
             }
 
             if (indexLayer == (int)Layers.Front)
@@ -246,14 +249,33 @@ namespace ShootThemAll
 
             batch.End();
             // Restaurer l'état précédent
-            batch.GraphicsDevice.RasterizerState = previousRasterizerState;
+            //batch.GraphicsDevice.RasterizerState = previousRasterizerState;
             batch.GraphicsDevice.ScissorRectangle = previousScissorRectangle;
             // Dessin supplémentaire (retour à l'état normal)
             batch.Begin();
 
+            if (indexLayer == (int)Layers.UI)
+            {
+                //batch.CenterStringXY(G.FontMain, $"Chain : {3}", AbsRectF.TopCenter - Vector2.UnitY * 10, Color.White);
+
+                DrawChainColor(batch, AbsRectF.TopCenter - Vector2.UnitY * 32, 5, 64, 48);
+                
+                //batch.Point(AbsRectF.TopCenter, 8, Color.White);
+            }
+
 
 
             return base.Draw(batch, gameTime, indexLayer);
+        }
+        private void DrawChainColor(SpriteBatch batch, Vector2 position, int nbColor = 5, float space = 40, float size = 32)
+        {
+            Vector2 pos = position - new Vector2((space * (nbColor-1)) / 2, 0);
+            for (int i = 0; i < nbColor; i++)
+            {
+                batch.FillRectangleCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Black * .75f, 0f);
+                batch.RectangleCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Gray, 1f);
+                batch.RectangleTargetCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Gold, size/3, size/3, 3f);
+            }
         }
     }
 }

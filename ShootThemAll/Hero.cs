@@ -6,6 +6,7 @@ using Mugen.Event;
 using Mugen.GFX;
 using Mugen.Physics;
 using System;
+using System.Collections.Generic;
 
 namespace ShootThemAll
 {
@@ -49,6 +50,8 @@ namespace ShootThemAll
         float _ticWave = 0f;
         float _wave = 0f;
 
+        List<Color> _chainColors = [];
+        
         public Hero(PlayerIndex playerIndex)
         {
             _type = UID.Get<Hero>();
@@ -62,6 +65,10 @@ namespace ShootThemAll
 
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
             _timer.Start(Timers.Shoot);
+
+            _chainColors.Add(Enemy.Colors[0]);
+            _chainColors.Add(Enemy.Colors[1]);
+            _chainColors.Add(Enemy.Colors[2]);
         }
         public void SetFireSpeed(float fireSpeed)
         {
@@ -227,7 +234,7 @@ namespace ShootThemAll
             _x += _stickLeft.X * 10f;
             _y += -_stickLeft.Y * 10f;
 
-            _ticWave += 0.2f;
+            _ticWave += 0.1f;
             _wave = (float)Math.Abs(Math.Sin(_ticWave) * .25f);
 
             return base.Update(gameTime);
@@ -258,8 +265,8 @@ namespace ShootThemAll
                 if (_targetScan != null)
                 {
                     batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 5f, Color.Red * .75f);
-                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 20, 20, 5f);
-                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Gold * .75f, 20, 20, 3f);
+                    //batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 16, 16, 5f);
+                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), HSV.Adjust(Color.Gold, valueMultiplier: .5f + _wave * 2f), 16, 16, 3f);
                 }
                 else
                 {
@@ -267,7 +274,7 @@ namespace ShootThemAll
 
                 }
 
-                    batch.FilledCircle(G.TexCircle, AbsXY, 10, Color.Gold * _alpha);
+                batch.FilledCircle(G.TexCircle, AbsXY, 10, Color.Gold * _alpha);
             }
 
             if (indexLayer == (int)Layers.Debug)
@@ -277,5 +284,6 @@ namespace ShootThemAll
 
             return base.Draw(batch, gameTime, indexLayer);
         }
+
     }
 }
