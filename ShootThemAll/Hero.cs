@@ -111,6 +111,10 @@ namespace ShootThemAll
                 Shoot();
             }
 
+            //Auto Shoot
+            //if (_stickLeft.Equals(Vector2.Zero))
+            //    Shoot();
+
         }
         public void Shoot()
         {
@@ -148,7 +152,7 @@ namespace ShootThemAll
                 var bonus = collider._node as Bonus;
                 if (bonus != null)
                 {
-                    bonus.DestroyMe();
+                    bonus.DestroyMe("Fire Speed +10%");
                     SetFireSpeed(_fireSpeed * (1f - 1f/10)); // 10% de la vitesse
                 }
             }
@@ -159,16 +163,42 @@ namespace ShootThemAll
 
             UpdateCollideZone(ZoneCast, new RectangleF(_x, 0, 1, _y - _oY));
 
-            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), UID.Get<Enemy>(), Enemy.ZoneBody);
+            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus>()], [Enemy.ZoneBody, Bonus.ZoneBody]);
 
             if (colliders.Count > 0)
             {
                 float maxY = 0f;
                 for (int i = 0; i < colliders.Count; i++)
                 {
-                    Enemy enemy = colliders[i]._node as Enemy;
-                    if (enemy != null)
+                    if (colliders[i]._node == null) continue;
+
+                    var node = colliders[i]._node;
+
+
+                    if (node._type == UID.Get<Bonus>())
                     {
+                        Bonus bonus = colliders[i]._node as Bonus;
+                        //if (bonus != null)
+                        //{
+                        //    //bonus.DestroyMe("Fire Speed +10%");
+                        //    //SetFireSpeed(_fireSpeed * (1f - 1f / 10)); // 10% de la vitesse
+
+                        //}
+                        if (bonus._y > maxY)
+                        {
+                            maxY = bonus._y;
+                            _targetScan = bonus;
+                        }
+                        else
+                            continue;
+
+                        continue;
+                    }
+
+                    if (node._type == UID.Get<Enemy>())
+                    {
+                        Enemy enemy = colliders[i]._node as Enemy;
+
                         if (enemy._y > maxY)
                         {
                             maxY = enemy._y;
@@ -197,7 +227,7 @@ namespace ShootThemAll
             _x += _stickLeft.X * 10f;
             _y += -_stickLeft.Y * 10f;
 
-            _ticWave += 0.1f;
+            _ticWave += 0.2f;
             _wave = (float)Math.Abs(Math.Sin(_ticWave) * .25f);
 
             return base.Update(gameTime);
@@ -227,7 +257,7 @@ namespace ShootThemAll
             {
                 if (_targetScan != null)
                 {
-                    batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 10f, Color.Red * 1f);
+                    batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 5f, Color.Red * .75f);
                     batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 20, 20, 5f);
                     batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Gold * .75f, 20, 20, 3f);
                 }

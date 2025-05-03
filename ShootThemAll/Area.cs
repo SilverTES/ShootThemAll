@@ -108,13 +108,13 @@ namespace ShootThemAll
         readonly Hero _hero;
 
         Vector2 _gridPos = new Vector2(0, 0);
-        float _cellSize = 50f;
+        float _cellSize = 40f;
 
         private RasterizerState scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
 
         public Area() 
         {
-            SetSize(1000, Screen.Height);
+            SetSize(960, Screen.Height - 80);
 
             int cellSize = 80;
             int gridWidth = (int)_rect.Width / cellSize;

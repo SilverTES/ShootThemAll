@@ -137,7 +137,7 @@ namespace ShootThemAll
                         new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
                         bullet.KillMe();
 
-                        Shake.SetIntensity(8f, 1f);
+                        Shake.SetIntensity(4f, .5f);
 
                         _state.Set(States.Hit);
                         _timer.Start(Timers.Hit);

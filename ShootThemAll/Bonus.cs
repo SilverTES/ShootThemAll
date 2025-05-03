@@ -25,10 +25,11 @@ namespace ShootThemAll
 
             SetCollideZone(ZoneBody, _rect);
         }
-        public void DestroyMe()
+        public void DestroyMe(string info)
         {
             //new FxExplose(XY + _parent.XY, Color.YellowGreen, 20, 100, 50).AppendTo(_parent);
             new FxGlow(XY, Color.White, .05f, 40).AppendTo(_parent);
+            new PopInfo(info, Color.Gold, Color.Red).AppendTo(_parent).SetPosition(XY - Vector2.UnitY * 10);
 
             G.SoundBonus.Play(.25f * G.Volume, 1f, 0f);
             KillMe();

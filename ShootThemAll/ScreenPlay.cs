@@ -27,7 +27,7 @@ namespace ShootThemAll
             SetSize(Screen.Width, Screen.Height);
 
             _area = new Area();
-            _area.SetPosition(200, 0);
+            _area.SetPosition(240, 40);
             _area.AppendTo(this);
 
             // Play music at start !
