@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mugen.Animation;
 using Mugen.Core;
 using Mugen.Event;
+using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Physics;
 using System;
@@ -9,6 +11,31 @@ using System.Collections.Generic;
 
 namespace ShootThemAll
 {
+    public class DamageMessage : IMessage
+    {
+        public int Damage { get; set; }
+        public DamageMessage(int damage)
+        {
+            Damage = damage;
+        }
+    }
+    public class  EnemyDestroyedMessage : IMessage
+    {
+        public Enemy Enemy { get; set; }
+        public EnemyDestroyedMessage(Enemy enemy)
+        {
+            Enemy = enemy;
+        }
+    }
+    public class EnemyMagnetMessage : IMessage
+    {
+        public Enemy Enemy { get; set; }
+        public EnemyMagnetMessage(Enemy enemy)
+        {
+            Enemy = enemy;
+        }
+    }
+
     public class Enemy : Node
     {
         public static List<Color> Colors =
@@ -29,6 +56,9 @@ namespace ShootThemAll
             Idle,
             Hit,
             Shoot,
+            MagnetHero,
+            FollowHero,
+            MagnetEnemy,
             Dead,
         }
         public States CurState => _state.CurState;
@@ -57,14 +87,16 @@ namespace ShootThemAll
         float _wave = 0f;
         Node _target;
 
+        public Color Color => _color;
         Color _color;
 
-        public Enemy(float speed, Node target, Color color)
+        Animate2D _animate2D;
+        public Enemy(Node target, Color color, float speed)
         {
             _type = UID.Get<Enemy>();
-            _speed = speed;
             _target = target;
             _color = color;
+            _speed = speed;
 
             _easeEnergy = new EasingValue(_energy);
 
@@ -108,6 +140,10 @@ namespace ShootThemAll
                 //Shake.SetIntensity(8f, 1f, false);
             });
 
+            _animate2D = new Animate2D();
+            _animate2D.Add("MagnetHero");
+            _animate2D.Add("MagnetEnemy");
+
         }
         public void AddEnergy(int energy)
         {
@@ -135,6 +171,7 @@ namespace ShootThemAll
 
                         new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
                         new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
+
                         bullet.KillMe();
 
                         Shake.SetIntensity(4f, .5f);
@@ -157,7 +194,7 @@ namespace ShootThemAll
             Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
             bullet.AppendTo(_parent);
         }
-        private void Move(float speed)
+        private void FallMove(float speed, GameTime gameTime)
         {
             // Move logic here
             _ticWave += 0.1f;
@@ -170,18 +207,32 @@ namespace ShootThemAll
                 _y = 0;
             }
         }
-        private void RunState()
+        public void MagnetHero(Hero hero)
+        {
+            _animate2D.SetMotion("MagnetHero", Easing.QuadraticEaseOut, XY, hero._rect.TopCenter - Vector2.UnitY * (_oY - 4), 16);
+            _animate2D.Start("MagnetHero");
+
+            _state.Change(States.MagnetHero);
+        }
+        public void MagnetEnemy(Enemy enemy)
+        {
+            _animate2D.SetMotion("MagnetEnemy", Easing.QuadraticEaseOut, XY, enemy._rect.BottomCenter + Vector2.UnitY * (_oY + 4), 16);
+            _animate2D.Start("MagnetEnemy");
+
+            _state.Change(States.MagnetEnemy);
+        }
+        private void RunState(GameTime gameTime)
         {
             switch (_state.CurState)
             {
                 case States.Idle:
                     HandleCollision();
-                    Move(_speed);
+                    FallMove(_speed, gameTime);
                     break;
 
                 case States.Hit:
                     //HandleCollision();
-                    Move(_speed / 2);
+                    FallMove(_speed / 2, gameTime);
 
                     break;
 
@@ -203,7 +254,47 @@ namespace ShootThemAll
 
                         new FxExplose(AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
                         new FxGlow(XY, color, .1f).AppendTo(_parent);
+
+                        MessageBus.Instance.SendMessage(new EnemyDestroyedMessage(this));
+
                         KillMe();
+                    }
+                    break;
+                case States.MagnetHero:
+
+                    _x = _animate2D.Value("MagnetHero").X;
+                    _y = _animate2D.Value("MagnetHero").Y;
+
+                    if (_animate2D.OnFinish("MagnetHero"))
+                    {
+                        MessageBus.Instance.SendMessage(new EnemyMagnetMessage(this));
+                        _state.Change(States.FollowHero);
+                    }
+
+                    break;
+
+                case States.FollowHero:
+
+                    if (_target == null)
+                    {
+                        _state.Change(States.Idle);
+                        break;
+                    }
+
+                    var pos = _target._rect.TopCenter - Vector2.UnitY * (_oY - 4);
+
+                    _x = pos.X;
+                    _y = pos.Y;
+
+                    break;
+                case States.MagnetEnemy:
+
+                    _x = _animate2D.Value("MagnetEnemy").X;
+                    _y = _animate2D.Value("MagnetEnemy").Y;
+
+                    if (_animate2D.OnFinish("MagnetEnemy"))
+                    {
+                        _state.Change(States.Idle);
                     }
                     break;
             }
@@ -214,10 +305,13 @@ namespace ShootThemAll
         }
         public override Node Update(GameTime gameTime)
         {
-            UpdateRect();
             _timer.Update();
             _easeEnergy.Update(gameTime);
-            RunState();
+            _animate2D.Update();
+
+            RunState(gameTime);
+
+            UpdateRect();
 
             if (_energy <= 0 && !_state.Is(States.Dead))
             {
@@ -234,19 +328,11 @@ namespace ShootThemAll
             {
                 var pos = AbsXY + Shake.GetVector2();
 
-                if (_state.Is(States.Idle))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _color, 0);
-                else if (_state.Is(States.Hit))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier : 2.0f), 0);
-                else if (_state.Is(States.Shoot))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.5f), 0);
-                else if (_state.Is(States.Dead))
-                    batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, HSV.Adjust(_color, valueMultiplier: 1.2f), 0);
-
+                batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _color, 0);
                 batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
-                //batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
+                batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
                 batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
 
                 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;

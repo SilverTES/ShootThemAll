@@ -3,7 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Mugen.Core;
 using Mugen.Event;
+using Mugen.Event.Message;
 using Mugen.GFX;
+using Mugen.Input;
 using Mugen.Physics;
 using System;
 using System.Collections.Generic;
@@ -12,6 +14,11 @@ namespace ShootThemAll
 {
     public class Hero : Node
     {
+        public enum Buttons
+        {
+            A,
+            B,
+        }
         public enum States
         {
             Idle,
@@ -45,13 +52,18 @@ namespace ShootThemAll
         Shake Shake = new Shake();
 
         Node _targetScan = null;
+        Node _magnetEnemy = null;
         bool _isShowTarget = false;
 
         float _ticWave = 0f;
         float _wave = 0f;
 
+        public int SlotSize = 5;
+        public List<Color> ChainColors => _chainColors;
         List<Color> _chainColors = [];
         
+        Control<Buttons> _control = new(); // TODO: Implement button control for hero
+
         public Hero(PlayerIndex playerIndex)
         {
             _type = UID.Get<Hero>();
@@ -66,9 +78,20 @@ namespace ShootThemAll
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
             _timer.Start(Timers.Shoot);
 
-            _chainColors.Add(Enemy.Colors[0]);
-            _chainColors.Add(Enemy.Colors[1]);
-            _chainColors.Add(Enemy.Colors[2]);
+            //ChainColors.Add(Enemy.Colors[0]);
+            //ChainColors.Add(Enemy.Colors[1]);
+            //ChainColors.Add(Enemy.Colors[2]);
+
+            MessageBus.Instance.Subscribe<FireSpeedMessage>((m) =>
+            {
+                SetFireSpeed(_fireSpeed * (1f - 1f / m.Speed)); // 10% de la vitesse
+            });
+
+            MessageBus.Instance.Subscribe<EnemyMagnetMessage>((m) =>
+            {
+                _magnetEnemy = m.Enemy;
+            });
+
         }
         public void SetFireSpeed(float fireSpeed)
         {
@@ -108,20 +131,54 @@ namespace ShootThemAll
                 {
                     _stickLeft.Normalize();
                 }
-
-                if (G.Key.IsKeyDown(Keys.LeftControl)) 
-                    Shoot();
             }
 
-            if (_gamePadState.Buttons.A == ButtonState.Pressed)
-            {
-                Shoot();
-            }
+            if (_gamePadState.Buttons.A == ButtonState.Pressed || _playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftControl) : false) Shoot();
+            if (_control.Once(Buttons.B, _gamePadState.Buttons.B == ButtonState.Pressed || _playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftAlt) : false)) MagnetEnemy();
 
             //Auto Shoot
             //if (_stickLeft.Equals(Vector2.Zero))
             //    Shoot();
 
+        }
+        public void AddChainColor(Color color)
+        {
+            _chainColors.Add(color);
+
+            if (_chainColors.Count > SlotSize)
+            {
+                _chainColors.Clear();
+                _chainColors.Add(color);
+            }
+        }
+        public void MagnetEnemy()
+        {
+            if (_targetScan != null)
+            {
+                if (_targetScan._type == UID.Get<Enemy>())
+                {
+                    if (_magnetEnemy == null)
+                    {
+                        Enemy enemy = _targetScan as Enemy;
+                        
+                        enemy.MagnetHero(this);
+                        Misc.Log("Magnet Hero");
+                    }
+                    else
+                    {
+                        if (_magnetEnemy._type == UID.Get<Enemy>())
+                        {
+                            Enemy magnetEnemy = _magnetEnemy as Enemy;
+                            Enemy enemy = _targetScan as Enemy;
+                            
+                            magnetEnemy.MagnetEnemy(enemy);
+                            Misc.Log("Magnet Enemy");
+
+                            _magnetEnemy = null; // Reset magnet enemy
+                        }
+                    }
+                }
+            }
         }
         public void Shoot()
         {
@@ -130,7 +187,7 @@ namespace ShootThemAll
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
                 angle += -Geo.RAD_90;
 
-                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.BlueViolet, 100, 10);
+                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10);
                 bullet.AppendTo(_parent);
 
                 new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
@@ -153,14 +210,15 @@ namespace ShootThemAll
                 }
             }
 
-            collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bonus>(), Bonus.ZoneBody);
+            collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bonus<FireSpeedMessage>>(), Bonus<FireSpeedMessage>.ZoneBody);
             if (collider != null)
             {
-                var bonus = collider._node as Bonus;
+                var bonus = collider._node as Bonus<FireSpeedMessage>;
                 if (bonus != null)
                 {
-                    bonus.DestroyMe("Fire Speed +10%");
-                    SetFireSpeed(_fireSpeed * (1f - 1f/10)); // 10% de la vitesse
+                    bonus.DestroyMe("Fire Speed +10%", new FireSpeedMessage(10));
+
+                    //SetFireSpeed(_fireSpeed * (1f - 1f/10)); // 10% de la vitesse
                 }
             }
 
@@ -170,7 +228,7 @@ namespace ShootThemAll
 
             UpdateCollideZone(ZoneCast, new RectangleF(_x, 0, 1, _y - _oY));
 
-            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus>()], [Enemy.ZoneBody, Bonus.ZoneBody]);
+            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus<FireSpeedMessage>>()], [Enemy.ZoneBody, Bonus<FireSpeedMessage>.ZoneBody]);
 
             if (colliders.Count > 0)
             {
@@ -182,9 +240,9 @@ namespace ShootThemAll
                     var node = colliders[i]._node;
 
 
-                    if (node._type == UID.Get<Bonus>())
+                    if (node._type == UID.Get<Bonus<FireSpeedMessage>>())
                     {
-                        Bonus bonus = colliders[i]._node as Bonus;
+                        Bonus<FireSpeedMessage> bonus = colliders[i]._node as Bonus<FireSpeedMessage>;
                         //if (bonus != null)
                         //{
                         //    //bonus.DestroyMe("Fire Speed +10%");
@@ -206,7 +264,7 @@ namespace ShootThemAll
                     {
                         Enemy enemy = colliders[i]._node as Enemy;
 
-                        if (enemy._y > maxY)
+                        if (enemy._y > maxY && enemy.CurState == Enemy.States.Idle)
                         {
                             maxY = enemy._y;
                             _targetScan = enemy;

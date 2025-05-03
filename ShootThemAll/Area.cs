@@ -3,9 +3,11 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Mugen.Core;
 using Mugen.Event;
+using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Input;
 using Mugen.Physics;
+using System;
 using System.Collections.Generic;
 
 namespace ShootThemAll
@@ -134,13 +136,13 @@ namespace ShootThemAll
             _hero.SetPosition(_rect.Width / 2, _rect.Height - 200);
             _hero.AppendTo(this);
 
-            new Bonus().SetPosition(200, 200).AppendTo(this);
-            new Bonus().SetPosition(400, 400).AppendTo(this);
+            new Bonus<FireSpeedMessage>().SetPosition(200, 200).AppendTo(this);
+            new Bonus<FireSpeedMessage>().SetPosition(400, 400).AppendTo(this);
 
 
             _timer.On(Timers.SpawnEnemy, () =>
             {
-                Enemy enemy = new Enemy(Misc.Rng.Next(1, 4), _hero, Enemy.RandomColor());
+                Enemy enemy = new Enemy(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
 
                 int border = 80;
 
@@ -153,7 +155,7 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnBonus, () =>
             {
-                Bonus bonus = new();
+                Bonus<FireSpeedMessage> bonus = new();
 
                 int border = 80;
 
@@ -166,6 +168,14 @@ namespace ShootThemAll
 
 
             _starManager.GenerateStar(100, new Rectangle(0, 0, (int)_rect.Width, (int)_rect.Height));
+
+            MessageBus.Instance.Subscribe<EnemyDestroyedMessage>((m) =>
+            {
+                Misc.Log($"Enemy {m.Enemy._index} was destroyed !");
+
+                _hero.AddChainColor(m.Enemy.Color);
+            });
+
         }
         public override Node Update(GameTime gameTime)
         {
@@ -222,7 +232,7 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FillRectangle(AbsRectF, Color.Black * 1f);
+                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .2f) * 1f);
 
                 _starManager.DrawStars(batch, AbsXY);
                 batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .1f, 1f);
@@ -258,7 +268,7 @@ namespace ShootThemAll
             {
                 //batch.CenterStringXY(G.FontMain, $"Chain : {3}", AbsRectF.TopCenter - Vector2.UnitY * 10, Color.White);
 
-                DrawChainColor(batch, AbsRectF.TopCenter - Vector2.UnitY * 32, 5, 64, 48);
+                DrawChainColor(batch, AbsRectF.TopCenter - Vector2.UnitY * 32, _hero.SlotSize, 64, 48);
                 
                 //batch.Point(AbsRectF.TopCenter, 8, Color.White);
             }
@@ -274,7 +284,13 @@ namespace ShootThemAll
             {
                 batch.FillRectangleCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Black * .75f, 0f);
                 batch.RectangleCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Gray, 1f);
-                batch.RectangleTargetCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.Gold, size/3, size/3, 3f);
+                batch.RectangleTargetCentered(pos + Vector2.UnitX * i * space, Vector2.One * size, Color.White, size/3, size/3, 3f);
+            }
+
+            for (int i = 0; i < _hero.ChainColors.Count; i++)
+            {
+                Color color = _hero.ChainColors[i];
+                batch.FillRectangleCentered(pos + Vector2.UnitX * i * space, Vector2.One * (size - 16), color * 1f, 0f);
             }
         }
     }

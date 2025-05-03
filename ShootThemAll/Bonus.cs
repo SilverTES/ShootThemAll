@@ -1,22 +1,35 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mugen.Core;
+using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Physics;
 using System;
 
 namespace ShootThemAll
 {
-    public class Bonus : Node
+    public class FireSpeedMessage : IMessage
+    {
+        public string Name => $"Fire Speed +{Speed}%";
+        public float Speed { get; set; }
+        public FireSpeedMessage(float speed)
+        {
+            Speed = speed;
+        }
+    }
+
+
+    public class Bonus<T> : Node
     {
         public const int ZoneBody = 0;
         public const int Radius = 48;
 
         float _ticWave = 0f;
         float _wave = 0f;
+
         public Bonus() 
         {
-            _type = UID.Get<Bonus>();
+            _type = UID.Get<Bonus<T>>();
 
             SetSize(Radius, Radius);
             SetPivot(Position.CENTER);
@@ -24,14 +37,18 @@ namespace ShootThemAll
             _alpha = 1f;
 
             SetCollideZone(ZoneBody, _rect);
+
         }
-        public void DestroyMe(string info)
+        public void DestroyMe(string info, IMessage message)
         {
             //new FxExplose(XY + _parent.XY, Color.YellowGreen, 20, 100, 50).AppendTo(_parent);
             new FxGlow(XY, Color.White, .05f, 40).AppendTo(_parent);
             new PopInfo(info, Color.Gold, Color.Red).AppendTo(_parent).SetPosition(XY - Vector2.UnitY * 10);
 
             G.SoundBonus.Play(.25f * G.Volume, 1f, 0f);
+
+            MessageBus.Instance.SendMessage(message);
+
             KillMe();
         }
         public override Node Update(GameTime gameTime)
@@ -57,6 +74,12 @@ namespace ShootThemAll
             {
                 batch.FilledCircle(G.TexCircle, AbsXY, Radius + _wave, Color.Gold * _alpha * .5f);
                 batch.FilledCircle(G.TexCircle, AbsXY, Radius - 8 + _wave, Color.Gold * _alpha);
+
+                
+            }
+            if (indexLayer == (int)Layers.Front)
+            {
+                //batch.CenterStringXY(G.FontMain, _info, AbsXY - Vector2.UnitY * 10, Color.White * _alpha);
             }
 
             if (indexLayer == (int)Layers.Glow)

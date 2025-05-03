@@ -63,6 +63,7 @@ namespace ShootThemAll
             _numParticles = numParticles;
             _particles = new Particles[_numParticles];
 
+            _color = color;
             _lifeTime = lifeTime;
 
             _alpha = 1f;
@@ -101,9 +102,9 @@ namespace ShootThemAll
         {
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FilledCircle(G.TexCircle, AbsXY, _size, _color * _alpha * .25f);
-                batch.FilledCircle(G.TexCircle, AbsXY, _size / 2, _color * _alpha * .5f);
-                batch.FilledCircle(G.TexCircle, AbsXY, _size / 4, _color * _alpha);
+                //batch.FilledCircle(G.TexCircle, AbsXY, _size, _color * _alpha * .25f);
+                //batch.FilledCircle(G.TexCircle, AbsXY, _size / 2, _color * _alpha * .5f);
+                //batch.FilledCircle(G.TexCircle, AbsXY, _size / 4, _color * _alpha);
 
                 for (int i = 0; i < _numParticles; i++)
                 {

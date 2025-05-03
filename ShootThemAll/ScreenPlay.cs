@@ -32,7 +32,7 @@ namespace ShootThemAll
 
             // Play music at start !
             MediaPlayer.Play(G.MusicTest);
-            MediaPlayer.Volume = 0.1f * G.Volume;
+            MediaPlayer.Volume = 0.08f * G.Volume;
             MediaPlayer.IsRepeating = true;
         }
         public override Node Update(GameTime gameTime)

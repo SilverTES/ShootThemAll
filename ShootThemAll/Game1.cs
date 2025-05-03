@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Mugen.Core;
+using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Input;
 
@@ -119,6 +120,9 @@ namespace ShootThemAll
 
         protected override void Update(GameTime gameTime)
         {
+            // Traiter les messages
+            MessageBus.Instance.ProcessMessages(gameTime);
+
             G.MousePos = WindowManager.GetMousePosition();
             G.Mouse = Mouse.GetState();
             G.Key = Keyboard.GetState();
