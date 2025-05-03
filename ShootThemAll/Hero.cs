@@ -187,8 +187,9 @@ namespace ShootThemAll
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
                 angle += -Geo.RAD_90;
 
-                Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10);
-                bullet.AppendTo(_parent);
+                //Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10);
+                // Utilisation du pool
+                G.PoolBullet.Get().Set(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
 
                 new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
 

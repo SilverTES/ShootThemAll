@@ -9,6 +9,7 @@ using Mugen.Input;
 using Mugen.Physics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ShootThemAll
 {
@@ -118,6 +119,19 @@ namespace ShootThemAll
 
         public Area() 
         {
+            G.PoolBullet = new ObjectPool<Bullet>
+            (
+                this,
+                () => new Bullet(null, Vector2.Zero, 0, 0, Color.Transparent),
+                10
+            );
+            G.PoolEnemy = new ObjectPool<Enemy>
+            (
+                this,
+                () => new Enemy(null, Color.Transparent, 0f),
+                10
+            );
+
             SetSize(640, 960);
 
             int cellSize = 80;
@@ -142,7 +156,9 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnEnemy, () =>
             {
-                Enemy enemy = new Enemy(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
+                //Enemy enemy = new Enemy(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
+
+                Enemy enemy = G.PoolEnemy.Get().Set(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
 
                 int border = 80;
 
@@ -269,8 +285,20 @@ namespace ShootThemAll
                 //batch.CenterStringXY(G.FontMain, $"Chain : {3}", AbsRectF.TopCenter - Vector2.UnitY * 10, Color.White);
 
                 DrawChainColor(batch, AbsRectF.TopCenter - Vector2.UnitY * 32, _hero.SlotSize, 64, 48);
-                
+
                 //batch.Point(AbsRectF.TopCenter, 8, Color.White);
+
+
+                for (int i = 0; i < G.PoolBullet.GetAllObjects().Count(); i++)
+                {
+                    var bullet = G.PoolBullet.GetAllObjects().ElementAt(i);
+                    batch.LeftMiddleString(G.FontMain, $"{i} : {bullet._isActive}", Vector2.One * 20 + Vector2.UnitY * i * 24, Color.White);
+                }
+                for (int i = 0; i < G.PoolEnemy.GetAllObjects().Count(); i++)
+                {
+                    var enemy = G.PoolEnemy.GetAllObjects().ElementAt(i);
+                    batch.LeftMiddleString(G.FontMain, $"{i} : {enemy._isActive} ", Vector2.One * 20 + Vector2.UnitY * i * 24 + Vector2.UnitX * 180, Color.White);
+                }
             }
 
 

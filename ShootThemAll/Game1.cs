@@ -30,6 +30,9 @@ namespace ShootThemAll
 
     public class G
     {
+        public static ObjectPool<Bullet> PoolBullet;
+        public static ObjectPool<Enemy> PoolEnemy;
+
         public static KeyboardState Key;
         public static MouseState Mouse;
         public static Vector2 MousePos;
@@ -98,6 +101,7 @@ namespace ShootThemAll
 
             G.TexLine = GFX.CreateLineTextureAA(GraphicsDevice, 100, 10, 5);
             G.TexCircle = GFX.CreateCircleTextureAA(GraphicsDevice, 100, 5);
+
         }
 
         protected override void LoadContent()

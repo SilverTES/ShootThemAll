@@ -91,6 +91,27 @@ namespace ShootThemAll
         Color _color;
 
         Animate2D _animate2D;
+        public Enemy Set(Node target, Color color, float speed)
+        {
+            _target = target;
+            _color = color;
+            _speed = speed;
+
+            return this;
+        }
+        public override Node Init()
+        {
+            _maxEnergy = 30;
+            _energy = 30;
+            _speed = 2f;
+            _size = 1f;
+            _ticWave = 0f;
+            _wave = 0f;
+            _easeEnergy.SetValue(_energy);
+            _state.Set(States.Idle);    
+
+            return base.Init();
+        }
         public Enemy(Node target, Color color, float speed)
         {
             _type = UID.Get<Enemy>();
@@ -106,18 +127,18 @@ namespace ShootThemAll
             SetCollideZone(ZoneBody, _rect);
 
             _timer.Set(Timers.Hit, Timer.Time(0, 0, 0.1f));
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 1.5f));
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 5f));
             _timer.Set(Timers.HasShoot, Timer.Time(0, 0, .25f));
 
-            //_timer.Start(Timers.Shoot);
+            _timer.Start(Timers.Shoot);
 
-            _timer.On(Timers.Shoot, () => 
+            _timer.On(Timers.Shoot, () =>
             {
                 //Console.WriteLine("Shoooot");
                 Shoot(_target.XY);
                 _state.Change(States.Shoot);
 
-                float time = Misc.Rng.Next(10, 30) / 10f;
+                float time = Misc.Rng.Next(30, 50) / 10f;
                 _timer.Set(Timers.Shoot, Timer.Time(0, 0, time), true);
             });
 
@@ -172,7 +193,7 @@ namespace ShootThemAll
                         new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
                         new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
 
-                        bullet.KillMe();
+                        bullet.DestroyMe();
 
                         Shake.SetIntensity(4f, .5f);
 
@@ -191,8 +212,10 @@ namespace ShootThemAll
             //angle += Geo.RAD_90;
             angle += Geo.GetRadian(XY, target);
 
-            Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
-            bullet.AppendTo(_parent);
+            //Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
+            //bullet.AppendTo(_parent);
+
+            G.PoolBullet.Get().Set(this, XY + Vector2.UnitY * _oY, angle, 3, Color.OrangeRed, 600).AppendTo(_parent);
         }
         private void FallMove(float speed, GameTime gameTime)
         {
@@ -257,7 +280,8 @@ namespace ShootThemAll
 
                         MessageBus.Instance.SendMessage(new EnemyDestroyedMessage(this));
 
-                        KillMe();
+                        //KillMe();
+                        G.PoolEnemy.Return(this, _parent);
                     }
                     break;
                 case States.MagnetHero:

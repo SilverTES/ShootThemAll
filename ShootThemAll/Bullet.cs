@@ -10,9 +10,10 @@ namespace ShootThemAll
     {
         public const int ZoneBody = 0;
 
-        Vector2 _velocity = new Vector2();
+        Vector2 _velocity;
         float _angle;
-        float _acceleration = 0f;
+        float _acceleration;
+        public float Speed => _speed;
         float _speed;
 
         int _lifeTime;
@@ -21,23 +22,46 @@ namespace ShootThemAll
 
         public Node Owner;
         Color _color;
+
         public Bullet(Node owner, Vector2 position, float angle, float speed, Color color, int lifeTime = 100, int power = 3)
         {
-            Owner = owner;
             _type = UID.Get<Bullet>();
 
+            Owner = owner;
             SetPosition(position.X, position.Y);
-
             _angle = angle;
             _speed = speed;
+            _color = color;
             _lifeTime = lifeTime;
             _power = power;
-            _color = color;
 
             SetSize(10, 10);
             SetPivot(Position.CENTER);
 
             SetCollideZone(ZoneBody, _rect);
+        }
+        public Bullet Set(Node owner, Vector2 position, float angle, float speed, Color color, int lifeTime = 100, int power = 3)
+        {
+            Owner = owner;
+            SetPosition(position.X, position.Y);
+            _angle = angle;
+            _speed = speed;
+            _color = color;
+            _lifeTime = lifeTime;
+            _power = power;
+
+            return this;
+        }
+        public override Node Init()
+        {
+
+            return base.Init();
+        }
+        public void DestroyMe()
+        {
+            //KillMe();
+            //_parent.RemoveChild(this);
+            G.PoolBullet.Return(this, _parent);
         }
         public override Node Update(GameTime gameTime)
         {
@@ -61,7 +85,7 @@ namespace ShootThemAll
             if (_lifeTime <= 0)
             {
                 // Remove the bullet from the game
-                KillMe();
+                DestroyMe();
             }
 
             return base.Update(gameTime);
