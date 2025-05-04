@@ -27,9 +27,11 @@ namespace ShootThemAll
         float _ticWave = 0f;
         float _wave = 0f;
 
-        public Bonus() 
+        string _info;
+        public Bonus(string info) 
         {
             _type = UID.Get<Bonus<T>>();
+            _info = info;
 
             SetSize(Radius, Radius);
             SetPivot(Position.CENTER);
@@ -79,7 +81,7 @@ namespace ShootThemAll
             }
             if (indexLayer == (int)Layers.Front)
             {
-                //batch.CenterStringXY(G.FontMain, _info, AbsXY - Vector2.UnitY * 10, Color.White * _alpha);
+                batch.CenterStringXY(G.FontMain, _info, AbsXY - Vector2.UnitY * 32, Color.Gold * _alpha);
             }
 
             if (indexLayer == (int)Layers.Glow)

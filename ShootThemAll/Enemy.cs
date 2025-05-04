@@ -59,6 +59,7 @@ namespace ShootThemAll
             MagnetHero,
             FollowHero,
             MagnetEnemy,
+            FollowEnemy,
             Dead,
         }
         public States CurState => _state.CurState;
@@ -86,6 +87,7 @@ namespace ShootThemAll
         float _ticWave = 0f;
         float _wave = 0f;
         Node _target;
+        Node _magnet;
 
         public Color Color => _color;
         Color _color;
@@ -120,6 +122,7 @@ namespace ShootThemAll
             Set(target, color, speed);
 
             _easeEnergy = new EasingValue(_energy);
+            
 
             SetSize(48, 48);
             SetPivot(Position.CENTER);
@@ -149,6 +152,8 @@ namespace ShootThemAll
 
                 float time = Misc.Rng.Next(30, 50) / 10f;
                 _timer.Set(Timers.Shoot, Timer.Time(0, 0, time), true);
+                _timer.Start(Timers.Shoot);
+
             });
 
             _timer.On(Timers.HasShoot, () =>
@@ -164,15 +169,36 @@ namespace ShootThemAll
             });
 
 
+            _state.On(States.Idle, () =>
+            {
+                // Active le tir
+                _timer.Start(Timers.Shoot);
+            });
+            _state.On(States.Hit, () =>
+            {
+                // Active le tir
+                _timer.Start(Timers.Shoot);
+            });
+
+            _state.On(States.FollowHero, () =>
+            {
+                // Désactive le tir
+                _timer.Stop(Timers.Shoot);
+            });
+            _state.On(States.FollowEnemy, () =>
+            {
+                // Désactive le tir
+                _timer.Stop(Timers.Shoot);
+            });
+
             _state.On(States.Shoot, () =>
             {
                 _timer.Start(Timers.HasShoot);
-                //Shake.SetIntensity(8f, 1f, false);
             });
 
             _animate2D = new Animate2D();
-            _animate2D.Add("MagnetHero");
-            _animate2D.Add("MagnetEnemy");
+            _animate2D.Add("Magnet");
+            //_animate2D.Add("MagnetEnemy");
 
         }
         public void AddEnergy(int energy)
@@ -182,6 +208,17 @@ namespace ShootThemAll
 
             _energy = Math.Clamp(_energy, 0, 100);
         }
+        private void ChainAddEnergy(int energy)
+        {
+            AddEnergy(energy);
+            if (_magnet == null) return;
+            if (_magnet._type == UID.Get<Enemy>())
+            {
+                Enemy enemy = (Enemy)_magnet;
+                enemy.ChainAddEnergy(energy);
+            }
+            
+        }   
         private void HandleCollision()
         {
             UpdateCollideZone(ZoneBody, _rect);
@@ -195,19 +232,22 @@ namespace ShootThemAll
                 {
                     if (bullet.Owner._type == UID.Get<Hero>())
                     {
-                        AddEnergy(-bullet.Power);
-
+                        // FX
                         Vector2 impact = new Vector2(bullet._x, _y + _oY);
-
                         new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
                         new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
-
                         bullet.DestroyMe();
-
                         Shake.SetIntensity(4f, .5f);
 
-                        _state.Set(States.Hit);
-                        _timer.Start(Timers.Hit);
+                        if (!_state.Is(States.FollowEnemy))
+                        {
+                            _state.Change(States.Hit);
+                            AddEnergy(-bullet.Power);
+                        }
+                        else
+                        {
+                            ChainAddEnergy(-bullet.Power);
+                        }
 
                         G.SoundHit.Play(0.1f * G.Volume, .5f, 0f);
                     }
@@ -238,16 +278,16 @@ namespace ShootThemAll
         }
         public void MagnetHero(Hero hero)
         {
-            _animate2D.SetMotion("MagnetHero", Easing.QuadraticEaseOut, XY, hero._rect.TopCenter - Vector2.UnitY * (_oY - 4), 16);
-            _animate2D.Start("MagnetHero");
-
+            _magnet = hero;
+            _animate2D.SetMotion("Magnet", Easing.QuadraticEaseOut, XY, hero._rect.Center - Vector2.UnitY * (_oY + _magnet._oY), 16);
+            _animate2D.Start("Magnet");
             _state.Change(States.MagnetHero);
         }
         public void MagnetEnemy(Enemy enemy)
         {
-            _animate2D.SetMotion("MagnetEnemy", Easing.QuadraticEaseOut, XY, enemy._rect.BottomCenter + Vector2.UnitY * (_oY + 4), 16);
-            _animate2D.Start("MagnetEnemy");
-
+            _magnet = enemy;
+            _animate2D.SetMotion("Magnet", Easing.QuadraticEaseOut, XY, enemy._rect.Center + Vector2.UnitY * (_oY + _magnet._oY), 16);
+            _animate2D.Start("Magnet");
             _state.Change(States.MagnetEnemy);
         }
         private void RunState(GameTime gameTime)
@@ -292,10 +332,10 @@ namespace ShootThemAll
                     break;
                 case States.MagnetHero:
 
-                    _x = _animate2D.Value("MagnetHero").X;
-                    _y = _animate2D.Value("MagnetHero").Y;
+                    _x = _animate2D.Value("Magnet").X;
+                    _y = _animate2D.Value("Magnet").Y;
 
-                    if (_animate2D.OnFinish("MagnetHero"))
+                    if (_animate2D.OnFinish("Magnet"))
                     {
                         MessageBus.Instance.SendMessage(new EnemyMagnetMessage(this));
                         _state.Change(States.FollowHero);
@@ -305,13 +345,7 @@ namespace ShootThemAll
 
                 case States.FollowHero:
 
-                    if (_target == null)
-                    {
-                        _state.Change(States.Idle);
-                        break;
-                    }
-
-                    var pos = _target._rect.TopCenter - Vector2.UnitY * (_oY - 4);
+                    var pos = _magnet._rect.Center - Vector2.UnitY * (_oY + _magnet._oY);
 
                     _x = pos.X;
                     _y = pos.Y;
@@ -319,13 +353,23 @@ namespace ShootThemAll
                     break;
                 case States.MagnetEnemy:
 
-                    _x = _animate2D.Value("MagnetEnemy").X;
-                    _y = _animate2D.Value("MagnetEnemy").Y;
+                    _x = _animate2D.Value("Magnet").X;
+                    _y = _animate2D.Value("Magnet").Y;
 
-                    if (_animate2D.OnFinish("MagnetEnemy"))
+                    if (_animate2D.OnFinish("Magnet"))
                     {
-                        _state.Change(States.Idle);
+                        _state.Change(States.FollowEnemy);
                     }
+                    break;
+                case States.FollowEnemy:
+
+                    pos = _magnet._rect.Center + Vector2.UnitY * (_oY + _magnet._oY);
+
+                    _x = pos.X;
+                    _y = pos.Y;
+
+                    HandleCollision();
+
                     break;
             }
         }
@@ -354,19 +398,27 @@ namespace ShootThemAll
 
         public override Node Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
         {
+            var pos = AbsXY + Shake.GetVector2();
+            
             if (indexLayer == (int)Layers.Main)
             {
-                var pos = AbsXY + Shake.GetVector2();
 
                 batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit) ? HSV.Adjust(_color, valueMultiplier: 1.5f) : _color, 0);
                 batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
+            }
+
+            if (indexLayer == (int)Layers.Front)
+            {
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);
                 batch.CenterStringXY(G.FontMain, $"{_state.CurState}", AbsRectF.TopCenter, Color.Cyan);
                 batch.CenterStringXY(G.FontMain, $"{_easeEnergy.Value}", AbsRectF.BottomCenter, Color.Yellow);
 
                 pos = AbsRectF.TopCenter - Vector2.UnitY * 10 - Vector2.UnitX * (_maxEnergy / 2) + Shake.GetVector2() * .5f;
                 G.DrawEnergyBar(batch, pos, _easeEnergy.Value, _maxEnergy, _alpha, 1f, 10f);
+
+                //batch.Rectangle(_rect, Color.Red, 2f);
+                //batch.Rectangle(_collideZone[ZoneBody].GetRect(), Color.Red, 2f);
             }
 
             return base.Draw(batch, gameTime, indexLayer);

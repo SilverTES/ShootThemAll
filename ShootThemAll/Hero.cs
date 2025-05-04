@@ -18,6 +18,10 @@ namespace ShootThemAll
         {
             A,
             B,
+            X,
+            Y,
+            Start,
+            Back,
         }
         public enum States
         {
@@ -53,7 +57,7 @@ namespace ShootThemAll
 
         Node _targetScan = null;
         Node _magnetEnemy = null;
-        bool _isShowTarget => _targetScan != null ? _targetScan._isActive : false ;
+        public bool IsHasTarget => _targetScan != null ? _targetScan._isActive : false ;
 
         float _ticWave = 0f;
         float _wave = 0f;
@@ -63,6 +67,7 @@ namespace ShootThemAll
         List<Color> _chainColors = [];
         
         Control<Buttons> _control = new(); // TODO: Implement button control for hero
+        bool _isReleasedA = false;
 
         public Hero(PlayerIndex playerIndex)
         {
@@ -130,8 +135,27 @@ namespace ShootThemAll
                 }
             }
 
-            if (_gamePadState.Buttons.A == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftControl) : false)) Shoot();
-            if (_control.Once(Buttons.B, _gamePadState.Buttons.B == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftAlt) : false))) MagnetEnemy();
+
+            if (_gamePadState.Buttons.A == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftControl) : false))
+            {
+                if (_timer.On(Timers.Shoot) || _isReleasedA)
+                {
+                    Shoot();
+                }
+            }
+
+            if (_control.Once(Buttons.X, _gamePadState.Buttons.X == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftShift) : false)))
+            {
+                MessageBus.Instance.SendMessage(new DestroyAllEnemyMessage());
+            }
+
+            if (_control.Once(Buttons.B, _gamePadState.Buttons.B == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftAlt) : false)))
+            {
+                MagnetEnemy();
+            }
+
+            _isReleasedA = _gamePadState.Buttons.A == ButtonState.Released && (_playerIndex == PlayerIndex.One ? G.Key.IsKeyUp(Keys.LeftControl) : false);
+
 
             //Auto Shoot
             //if (_stickLeft.Equals(Vector2.Zero))
@@ -148,12 +172,17 @@ namespace ShootThemAll
                 _chainColors.Add(color);
             }
         }
-        public void MagnetEnemy()
+        private void MagnetEnemy()
         {
-            if (_targetScan != null)
+            //Misc.Log($"Try Magnet Enemy: {IsHasTarget}");
+
+            if (IsHasTarget)
             {
+                Misc.Log($"Magnet Enemy: {_targetScan._index}");
+
                 if (_targetScan._type == UID.Get<Enemy>())
                 {
+
                     if (_magnetEnemy == null)
                     {
                         Enemy enemy = _targetScan as Enemy;
@@ -179,19 +208,12 @@ namespace ShootThemAll
         }
         public void Shoot()
         {
-            if (_timer.On(Timers.Shoot))
-            {
-                float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
-
-                angle += -Geo.RAD_90;
-
-                // Utilisation du pool
-                G.PoolBullet.Get().Set(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
-
-                new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
-
-                G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
-            }
+            float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
+            angle += -Geo.RAD_90;
+            // Utilisation du pool
+            G.PoolBullet.Get().Set(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
+            new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
+            G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
         }
         private void HandleCollision()
         {
@@ -267,7 +289,7 @@ namespace ShootThemAll
                     {
                         Enemy enemy = colliders[i]._node as Enemy;
 
-                        if (enemy._y > maxY)// && enemy.CurState != Enemy.States.Dead)
+                        if (enemy._y > maxY && enemy.CurState != Enemy.States.FollowHero)
                         {
                             maxY = enemy._y;
                             _targetScan = enemy;
@@ -281,8 +303,6 @@ namespace ShootThemAll
                 }
             }
 
-            //if (_targetScan != null)
-            //    if (!_targetScan._isActive) _targetScan = null; // Reset target scan if not active anymore
 
         }
         public override Node Update(GameTime gameTime)
@@ -290,9 +310,10 @@ namespace ShootThemAll
             _timer.Update();
             UpdateRect();
 
+            HandleInput();
+
             _targetScan = null;
 
-            HandleInput();
             HandleCollision();
 
             _x += _stickLeft.X * 10f;
@@ -326,11 +347,12 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.FrontFX)
             {
-                if (_isShowTarget)
+                if (IsHasTarget)
                 {
                     batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 5f, Color.Red * .75f);
                     //batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 16, 16, 5f);
-                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), HSV.Adjust(Color.Gold, valueMultiplier: .5f + _wave * 2f), 16, 16, 3f);
+                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), HSV.Adjust(Color.Red, valueMultiplier: .5f + _wave * 2f), 16, 16, 5f);
+                    batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), HSV.Adjust(Color.Yellow, valueMultiplier: .5f + _wave * 2f), 16, 16, 3f);
                 }
                 else
                 {

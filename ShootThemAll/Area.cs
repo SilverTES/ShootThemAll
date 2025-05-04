@@ -17,6 +17,10 @@ namespace ShootThemAll
     {
         public string Name => "Toggle Pause";
     }
+    public class DestroyAllEnemyMessage : IMessage
+    {
+        public string Name => "Destroy All Enemy";
+    }
     public struct Star
     {
         public Vector2 Position;
@@ -152,15 +156,15 @@ namespace ShootThemAll
             _hero.SetPosition(_rect.Width / 2, _rect.Height - 200);
             _hero.AppendTo(this);
 
-            new Bonus<FireSpeedMessage>().SetPosition(200, 200).AppendTo(this);
-            new Bonus<FireSpeedMessage>().SetPosition(400, 400).AppendTo(this);
+            //new Bonus<FireSpeedMessage>("FireSpeed +10%").SetPosition(200, 200).AppendTo(this);
+            //new Bonus<FireSpeedMessage>("FireSpeed +10%").SetPosition(400, 400).AppendTo(this);
 
 
             _timer.On(Timers.SpawnEnemy, () =>
             {
                 //Enemy enemy = new Enemy(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
 
-                Enemy enemy = G.PoolEnemy.Get().Set(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 4));
+                Enemy enemy = G.PoolEnemy.Get().Set(_hero, Enemy.RandomColor(), Misc.Rng.Next(1, 2));
 
                 int border = 80;
 
@@ -173,7 +177,7 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnBonus, () =>
             {
-                Bonus<FireSpeedMessage> bonus = new();
+                Bonus<FireSpeedMessage> bonus = new("FireSpeed +10%");
 
                 int border = 80;
 
@@ -197,6 +201,18 @@ namespace ShootThemAll
             MessageBus.Instance.Subscribe<TogglePauseMessage>((m) =>
             {
                 TogglePause();
+            });
+
+            MessageBus.Instance.Subscribe<DestroyAllEnemyMessage>((m) =>
+            {
+                Misc.Log($"Destroy All Enemy !");
+                foreach (var enemy in GroupOf<Enemy>())
+                {
+                    if (enemy._isActive)
+                    {
+                        enemy.DestroyMe();
+                    }
+                }
             });
 
         }
@@ -299,17 +315,17 @@ namespace ShootThemAll
 
                 //batch.Point(AbsRectF.TopCenter, 8, Color.White);
 
-
-                for (int i = 0; i < G.PoolBullet.GetAllObjects().Count(); i++)
-                {
-                    var bullet = G.PoolBullet.GetAllObjects().ElementAt(i);
-                    batch.LeftMiddleString(G.FontMain, $"{i} : {bullet._index} : {bullet._isActive}", Vector2.One * 20 + Vector2.UnitY * i * 18, Color.White);
-                }
-                for (int i = 0; i < G.PoolEnemy.GetAllObjects().Count(); i++)
-                {
-                    var enemy = G.PoolEnemy.GetAllObjects().ElementAt(i);
-                    batch.LeftMiddleString(G.FontMain, $"{i} : {enemy._index} : {enemy._isActive} ", Vector2.One * 20 + Vector2.UnitY * i * 18 + Vector2.UnitX * 180, Color.White);
-                }
+                // Debug Object Pool
+                //for (int i = 0; i < G.PoolBullet.GetAllObjects().Count(); i++)
+                //{
+                //    var bullet = G.PoolBullet.GetAllObjects().ElementAt(i);
+                //    batch.LeftMiddleString(G.FontMain, $"{i} : {bullet._index} : {bullet._isActive}", Vector2.One * 20 + Vector2.UnitY * i * 18, Color.White);
+                //}
+                //for (int i = 0; i < G.PoolEnemy.GetAllObjects().Count(); i++)
+                //{
+                //    var enemy = G.PoolEnemy.GetAllObjects().ElementAt(i);
+                //    batch.LeftMiddleString(G.FontMain, $"{i} : {enemy._index} : {enemy._isActive} ", Vector2.One * 20 + Vector2.UnitY * i * 18 + Vector2.UnitX * 180, Color.White);
+                //}
             }
 
 
