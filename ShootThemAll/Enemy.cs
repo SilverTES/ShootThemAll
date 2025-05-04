@@ -40,12 +40,12 @@ namespace ShootThemAll
     {
         public static List<Color> Colors =
         [
-            new Color(128, 0, 0),
-            new Color(0, 128, 0),
-            new Color(0, 0, 128),
-            new Color(128, 128, 0),
-            new Color(0, 128, 128),
-            new Color(128, 0, 128),
+            new Color(150, 10, 10),
+            new Color(10, 150, 10),
+            new Color(10, 10, 150),
+            new Color(150, 150, 10),
+            new Color(10, 150, 150),
+            new Color(150, 10, 150),
         ];
         public static Color RandomColor()
         {
@@ -135,6 +135,15 @@ namespace ShootThemAll
             _timer.On(Timers.Shoot, () =>
             {
                 //Console.WriteLine("Shoooot");
+                // Debug
+                //if (_target == null)
+                //{
+                //    _state.Change(States.Idle);
+                    
+                //    MessageBus.Instance.SendMessage(new TogglePauseMessage());
+                //    return;
+                //}
+
                 Shoot(_target.XY);
                 _state.Change(States.Shoot);
 
@@ -212,9 +221,6 @@ namespace ShootThemAll
             //angle += Geo.RAD_90;
             angle += Geo.GetRadian(XY, target);
 
-            //Bullet bullet = new Bullet(this, XY, angle, 6, Color.OrangeRed, 240);
-            //bullet.AppendTo(_parent);
-
             G.PoolBullet.Get().Set(this, XY + Vector2.UnitY * _oY, angle, 3, Color.OrangeRed, 600).AppendTo(_parent);
         }
         private void FallMove(float speed, GameTime gameTime)
@@ -254,13 +260,13 @@ namespace ShootThemAll
                     break;
 
                 case States.Hit:
-                    //HandleCollision();
+                    HandleCollision();
                     FallMove(_speed / 2, gameTime);
 
                     break;
 
                 case States.Shoot:
-                    //HandleCollision();
+                    HandleCollision();
                     //Move(_speed);
                     break;
 
@@ -352,7 +358,7 @@ namespace ShootThemAll
             {
                 var pos = AbsXY + Shake.GetVector2();
 
-                batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _color, 0);
+                batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit) ? HSV.Adjust(_color, valueMultiplier: 1.5f) : _color, 0);
                 batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
 
                 //batch.CenterStringXY(G.FontMain, "Enemy", AbsXY, Color.White);

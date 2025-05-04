@@ -45,6 +45,8 @@ namespace ShootThemAll
             _lifeTime = lifeTime;
             _power = power;
 
+            _velocity = Vector2.Zero;
+
             return this;
         }
         public override Node Init()

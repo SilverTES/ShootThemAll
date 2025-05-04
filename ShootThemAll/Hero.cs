@@ -53,7 +53,7 @@ namespace ShootThemAll
 
         Node _targetScan = null;
         Node _magnetEnemy = null;
-        bool _isShowTarget = false;
+        bool _isShowTarget => _targetScan != null ? _targetScan._isActive : false ;
 
         float _ticWave = 0f;
         float _wave = 0f;
@@ -78,10 +78,6 @@ namespace ShootThemAll
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
             _timer.Start(Timers.Shoot);
 
-            //ChainColors.Add(Enemy.Colors[0]);
-            //ChainColors.Add(Enemy.Colors[1]);
-            //ChainColors.Add(Enemy.Colors[2]);
-
             MessageBus.Instance.Subscribe<FireSpeedMessage>((m) =>
             {
                 SetFireSpeed(_fireSpeed * (1f - 1f / m.Speed)); // 10% de la vitesse
@@ -101,6 +97,7 @@ namespace ShootThemAll
 
             Console.WriteLine($"_fireSpeed = {_fireSpeed}");
             _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
+            _timer.Start(Timers.Shoot);
         }
         private void HandleInput()
         {
@@ -133,8 +130,8 @@ namespace ShootThemAll
                 }
             }
 
-            if (_gamePadState.Buttons.A == ButtonState.Pressed || _playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftControl) : false) Shoot();
-            if (_control.Once(Buttons.B, _gamePadState.Buttons.B == ButtonState.Pressed || _playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftAlt) : false)) MagnetEnemy();
+            if (_gamePadState.Buttons.A == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftControl) : false)) Shoot();
+            if (_control.Once(Buttons.B, _gamePadState.Buttons.B == ButtonState.Pressed || (_playerIndex == PlayerIndex.One ? G.Key.IsKeyDown(Keys.LeftAlt) : false))) MagnetEnemy();
 
             //Auto Shoot
             //if (_stickLeft.Equals(Vector2.Zero))
@@ -185,9 +182,9 @@ namespace ShootThemAll
             if (_timer.On(Timers.Shoot))
             {
                 float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
+
                 angle += -Geo.RAD_90;
 
-                //Bullet bullet = new Bullet(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10);
                 // Utilisation du pool
                 G.PoolBullet.Get().Set(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
 
@@ -224,9 +221,6 @@ namespace ShootThemAll
             }
 
 
-
-            _targetScan = null;
-
             UpdateCollideZone(ZoneCast, new RectangleF(_x, 0, 1, _y - _oY));
 
             var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus<FireSpeedMessage>>()], [Enemy.ZoneBody, Bonus<FireSpeedMessage>.ZoneBody]);
@@ -239,6 +233,14 @@ namespace ShootThemAll
                     if (colliders[i]._node == null) continue;
 
                     var node = colliders[i]._node;
+
+                    //if (node == null) continue;
+                    if (!node._isActive)
+                    {
+                        Misc.Log($"Node {node._index} is not active");
+                        MessageBus.Instance.SendMessage(new TogglePauseMessage());
+                        continue;
+                    }
 
 
                     if (node._type == UID.Get<Bonus<FireSpeedMessage>>())
@@ -265,7 +267,7 @@ namespace ShootThemAll
                     {
                         Enemy enemy = colliders[i]._node as Enemy;
 
-                        if (enemy._y > maxY && enemy.CurState == Enemy.States.Idle)
+                        if (enemy._y > maxY)// && enemy.CurState != Enemy.States.Dead)
                         {
                             maxY = enemy._y;
                             _targetScan = enemy;
@@ -279,13 +281,16 @@ namespace ShootThemAll
                 }
             }
 
-            _isShowTarget = _targetScan != null;
+            //if (_targetScan != null)
+            //    if (!_targetScan._isActive) _targetScan = null; // Reset target scan if not active anymore
 
         }
         public override Node Update(GameTime gameTime)
         {
             _timer.Update();
             UpdateRect();
+
+            _targetScan = null;
 
             HandleInput();
             HandleCollision();
@@ -321,7 +326,7 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.FrontFX)
             {
-                if (_targetScan != null)
+                if (_isShowTarget)
                 {
                     batch.LineTexture(G.TexLine, AbsXY, new Vector2(AbsX, _targetScan.AbsY + _targetScan._oY), 5f, Color.Red * .75f);
                     //batch.RectangleTargetCentered(_targetScan.AbsXY, _targetScan.AbsRectF.GetSize() * (1.2f + _wave), Color.Red * .75f, 16, 16, 5f);
