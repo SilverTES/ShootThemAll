@@ -75,7 +75,7 @@ namespace ShootThemAll
         {
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FilledCircle(G.TexCircle, AbsXY, Radius + _wave, Color.Gold * _alpha * .5f);
+                batch.FilledCircle(G.TexCircle, AbsXY, Radius + _wave, Color.Red * _alpha * .5f);
                 batch.FilledCircle(G.TexCircle, AbsXY, Radius - 8 + _wave, Color.Gold * _alpha);
 
                 

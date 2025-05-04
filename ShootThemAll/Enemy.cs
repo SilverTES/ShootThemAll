@@ -76,15 +76,15 @@ namespace ShootThemAll
 
         public Shake Shake = new Shake();
 
-        int _maxEnergy = 30;
-        int _energy = 30;
+        int _maxEnergy;
+        int _energy;
         EasingValue _easeEnergy;
 
-        float _speed = 2f;
-        float _size = 1f;
+        float _speed;
+        float _size;
 
-        float _ticWave = 0f;
-        float _wave = 0f;
+        float _ticWave;
+        float _wave;
         Node _target;
         Node _magnet;
 
@@ -109,23 +109,25 @@ namespace ShootThemAll
             _ticWave = 0f;
             _wave = 0f;
             _easeEnergy.SetValue(_energy);
-            _state.Set(States.Idle);
+            _target = null;
+            _magnet = null;
 
+            _state.Set(States.Idle);
 
             return base.Init();
         }
         public Enemy(Node target, Color color, float speed)
         {
             _type = UID.Get<Enemy>();
+            _easeEnergy = new EasingValue(_energy);
 
+            Init();
             Set(target, color, speed);
 
-            _easeEnergy = new EasingValue(_energy);
             
 
             SetSize(48, 48);
             SetPivot(Position.CENTER);
-
             SetCollideZone(ZoneBody, _rect);
 
             _timer.Set(Timers.DamageTime, Timer.Time(0, 0, 0.1f));
