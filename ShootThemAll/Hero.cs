@@ -210,10 +210,16 @@ namespace ShootThemAll
         {
             float angle = ((float)Misc.Rng.NextDouble() - 0.5f) / 20f;
             angle += -Geo.RAD_90;
+
+            var pos = XY - Vector2.UnitY * _oY;
             // Utilisation du pool
-            G.PoolBullet.Get().Set(this, XY - Vector2.UnitY * _oY, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
-            new FxGlow(XY - Vector2.UnitY * _oY, Color.BlueViolet, .025f, 40).AppendTo(_parent);
-            G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
+            G.PoolBullet.Get().Set(this, pos, angle, 24, Color.Gold, 100, 10).AppendTo(_parent);
+            
+            new FxExplose(Particles.Shapes.Line, pos + _parent.XY, Color.Gold, 10, 10, 40, 5).AppendTo(_parent);
+            new FxGlow(pos, Color.Gold, .025f, 40).AppendTo(_parent);
+            
+            //G.SoundBim.Play(0.025f * G.Volume, 1f, 0f);
+            G.SoundEffectManager.Play(G.SoundBim, 0.025f * G.Volume, 1f, 0f);
         }
         private void HandleCollision()
         {

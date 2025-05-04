@@ -47,7 +47,8 @@ namespace ShootThemAll
             new FxGlow(XY, Color.White, .05f, 40).AppendTo(_parent);
             new PopInfo(info, Color.Gold, Color.Red).AppendTo(_parent).SetPosition(XY - Vector2.UnitY * 10);
 
-            G.SoundBonus.Play(.25f * G.Volume, 1f, 0f);
+            //G.SoundBonus.Play(.25f * G.Volume, 1f, 0f);
+            G.SoundEffectManager.Play(G.SoundBonus, .25f * G.Volume, 1f, 0f);
 
             MessageBus.Instance.SendMessage(message);
 

@@ -235,7 +235,9 @@ namespace ShootThemAll
                         // FX
                         Vector2 impact = new Vector2(bullet._x, _y + _oY);
                         new PopInfo(bullet.Power.ToString(), Color.Yellow, Color.Red).AppendTo(_parent).SetPosition(impact);
-                        new FxExplose(impact + _parent.XY, Color.LightCyan, 10, 20, 40).AppendTo(_parent);
+
+                        new FxExplose(Particles.Shapes.Line, impact + _parent.XY,HSV.Adjust(_color, valueMultiplier: 1.5f), 10, 20, 40).AppendTo(_parent);
+                        
                         bullet.DestroyMe();
                         Shake.SetIntensity(4f, .5f);
 
@@ -249,7 +251,8 @@ namespace ShootThemAll
                             ChainAddEnergy(-bullet.Power);
                         }
 
-                        G.SoundHit.Play(0.1f * G.Volume, .5f, 0f);
+                        //G.SoundHit.Play(0.1f * G.Volume, .5f, 0f);
+                        G.SoundEffectManager.Play(G.SoundHit, 0.1f * G.Volume, .5f, 0f);
                     }
                 }
             }
@@ -317,11 +320,12 @@ namespace ShootThemAll
                     {
                         _size = 0;
 
-                        G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
+                        //G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
+                        G.SoundEffectManager.Play(G.SoundExplose, 0.1f * G.Volume, 1f, 0f);
 
                         Color color = HSV.Adjust(_color, valueMultiplier: 1.5f);
 
-                        new FxExplose(AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
+                        new FxExplose(Particles.Shapes.Square, AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
                         new FxGlow(XY, color, .1f).AppendTo(_parent);
 
                         MessageBus.Instance.SendMessage(new EnemyDestroyedMessage(this));

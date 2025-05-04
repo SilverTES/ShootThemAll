@@ -8,6 +8,15 @@ namespace ShootThemAll
 {
     struct Particles
     {
+        public enum Shapes
+        {
+            Point,
+            Circle,
+            Line,
+            Square,
+            Texture,
+        }
+
         Vector2 _position;
         Vector2 _velocity;
         float _angle;
@@ -16,9 +25,10 @@ namespace ShootThemAll
         Color _color;
         float _size;
         float _alpha = 1f;
-
-        public Particles(Vector2 position, float angle, float speed, Color color, float size = 3, float acceleration = .90f)
+        public Shapes Shape = Shapes.Circle;
+        public Particles(Shapes shape, Vector2 position, float angle, float speed, Color color, float size = 3, float acceleration = .90f)
         {
+            Shape = shape;
             _position = position;
             _angle = angle;
             _speed = speed;
@@ -36,15 +46,54 @@ namespace ShootThemAll
             _position += _velocity;
 
         }
-        public void Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
+        public void Draw(SpriteBatch batch)
         {
-            //batch.Point(_position, _size, _color * _alpha);
-            //batch.Point(_position, _size / 2, Color.LightYellow * _alpha);
-            //batch.Point(_position, _size / 4, Color.White * _alpha);
 
-            batch.FilledCircle(G.TexCircle, _position, _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha * .5f);
-            batch.FilledCircle(G.TexCircle, _position, _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f);
-            batch.FilledCircle(G.TexCircle, _position, _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f);
+            switch (Shape)
+            {
+                case Shapes.Point:
+
+                    batch.Point(_position, _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha);
+                    batch.Point(_position, _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f);
+                    batch.Point(_position, _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f);
+
+                    break;
+
+                case Shapes.Circle:
+
+                    batch.FilledCircle(G.TexCircle, _position, _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha * .5f);
+                    batch.FilledCircle(G.TexCircle, _position, _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f);
+                    batch.FilledCircle(G.TexCircle, _position, _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f);
+
+                    break;
+
+                case Shapes.Line:
+
+                    batch.LineTexture(G.TexLine, _position, _position - _velocity * 4, _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha * .5f);
+                    batch.LineTexture(G.TexLine, _position, _position - _velocity * 4, _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f);
+                    batch.LineTexture(G.TexLine, _position, _position - _velocity * 4, _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f);
+
+                    break;
+
+                case Shapes.Square:
+
+                    batch.FillRectangleCentered(_position, Vector2.One * _size, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha * .5f, 0);
+                    batch.FillRectangleCentered(_position, Vector2.One * _size / 2, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f, 0);
+                    batch.FillRectangleCentered(_position, Vector2.One * _size / 4, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f, 0);
+
+                    break;
+
+                case Shapes.Texture:
+
+                    GFX.Draw(batch, G.TexGlow1, HSV.Adjust(_color, valueMultiplier: 1.5f) * _alpha, 0, _position, Position.CENTER, Vector2.One * _size * .001f);
+                    GFX.Draw(batch, G.TexGlow1, HSV.Adjust(_color, valueMultiplier: 2f) * _alpha * .75f, 0, _position, Position.CENTER, Vector2.One * _size * .001f);
+                    GFX.Draw(batch, G.TexGlow1, HSV.Adjust(_color, valueMultiplier: 4f) * _alpha * 1f, 0, _position, Position.CENTER, Vector2.One * _size * .001f);
+
+                    break;
+
+                default:
+                    break;
+            }
         }
 
     }
@@ -58,7 +107,7 @@ namespace ShootThemAll
         int _lifeTime = 40;
         float _size = 0f;
         Color _color;
-        public FxExplose(Vector2 position, Color color, float size = 3, int numParticles = 10, int lifeTime = 40, float maxSpeed = 10, float acceleration = .90f)
+        public FxExplose(Particles.Shapes shape, Vector2 position, Color color, float size = 3, int numParticles = 10, int lifeTime = 40, float maxSpeed = 10, float acceleration = .90f)
         {
             _numParticles = numParticles;
             _particles = new Particles[_numParticles];
@@ -77,7 +126,7 @@ namespace ShootThemAll
                 float speed = (float)Misc.Rng.NextDouble() * maxSpeed;
                 float rsize = (float)Misc.Rng.NextDouble() * size + 1f;
 
-                _particles[i] = new Particles(position, angle, speed, color, rsize, acceleration);
+                _particles[i] = new Particles(shape, position, angle, speed, color, rsize, acceleration);
             }
         }
         public override Node Update(GameTime gameTime)
@@ -100,7 +149,7 @@ namespace ShootThemAll
         }
         public override Node Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
         {
-            if (indexLayer == (int)Layers.Main)
+            if (indexLayer == (int)Layers.Front)
             {
                 //batch.FilledCircle(G.TexCircle, AbsXY, _size, _color * _alpha * .25f);
                 //batch.FilledCircle(G.TexCircle, AbsXY, _size / 2, _color * _alpha * .5f);
@@ -108,14 +157,14 @@ namespace ShootThemAll
 
                 for (int i = 0; i < _numParticles; i++)
                 {
-                    _particles[i].Draw(batch, gameTime, indexLayer);
+                    _particles[i].Draw(batch);
                 }
             }
 
             if (indexLayer == (int)Layers.FrontFX)
                 for (int i = 0; i < _numParticles; i++)
                 {
-                    _particles[i].Draw(batch, gameTime, indexLayer);
+                    _particles[i].Draw(batch);
                 }
 
             return base.Draw(batch, gameTime, indexLayer);

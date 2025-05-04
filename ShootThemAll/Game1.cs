@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using Mugen.Audio;
 using Mugen.Core;
 using Mugen.Event.Message;
 using Mugen.GFX;
@@ -30,6 +30,8 @@ namespace ShootThemAll
 
     public class G
     {
+        public static SoundEffectManager SoundEffectManager;
+
         public static ObjectPool<Bullet> PoolBullet;
         public static ObjectPool<Enemy> PoolEnemy;
 
@@ -120,6 +122,21 @@ namespace ShootThemAll
             G.SoundBonus = Content.Load<SoundEffect>("Sounds/success_1");
 
             G.MusicTest = Content.Load<Song>("Musics/destinazione_altrove_-_Kalte_Ohren_(_Remix_)");
+
+
+            G.SoundEffectManager = new SoundEffectManager();
+            G.SoundEffectManager.AddSoundEffect(G.SoundBim, 4);
+            G.SoundEffectManager.AddSoundEffect(G.SoundHit, 4);
+            G.SoundEffectManager.AddSoundEffect(G.SoundExplose, 4);
+            G.SoundEffectManager.AddSoundEffect(G.SoundBonus, 4);
+
+        }
+        protected override void UnloadContent()
+        {
+            // Libérer les ressources
+            G.SoundEffectManager.Dispose();
+
+            base.UnloadContent();
         }
 
         protected override void Update(GameTime gameTime)
@@ -139,6 +156,8 @@ namespace ShootThemAll
 
             if (ButtonControl.OnPress("ToggleFullscreen", G.Key.IsKeyDown(Keys.F11)))
                 WindowManager.ToggleFullscreen();
+
+            G.SoundEffectManager.Update(gameTime);
 
             base.Update(gameTime);
         }
