@@ -108,16 +108,16 @@ namespace ShootThemAll
             _ticWave = 0f;
             _wave = 0f;
             _easeEnergy.SetValue(_energy);
-            _state.Set(States.Idle);    
+            _state.Set(States.Idle);
+
 
             return base.Init();
         }
         public Enemy(Node target, Color color, float speed)
         {
             _type = UID.Get<Enemy>();
-            _target = target;
-            _color = color;
-            _speed = speed;
+
+            Set(target, color, speed);
 
             _easeEnergy = new EasingValue(_energy);
 

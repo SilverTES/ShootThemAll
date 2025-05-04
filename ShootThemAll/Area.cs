@@ -13,6 +13,10 @@ using System.Linq;
 
 namespace ShootThemAll
 {
+    public class TogglePauseMessage : IMessage
+    {
+        public string Name => "Toggle Pause";
+    }
     public struct Star
     {
         public Vector2 Position;
@@ -121,15 +125,13 @@ namespace ShootThemAll
         {
             G.PoolBullet = new ObjectPool<Bullet>
             (
-                this,
                 () => new Bullet(null, Vector2.Zero, 0, 0, Color.Transparent),
-                10
+                4
             );
             G.PoolEnemy = new ObjectPool<Enemy>
             (
-                this,
                 () => new Enemy(null, Color.Transparent, 0f),
-                10
+                4
             );
 
             SetSize(640, 960);
@@ -192,6 +194,15 @@ namespace ShootThemAll
                 _hero.AddChainColor(m.Enemy.Color);
             });
 
+            MessageBus.Instance.Subscribe<TogglePauseMessage>((m) =>
+            {
+                TogglePause();
+            });
+
+        }
+        public void TogglePause()
+        {
+            _isPaused = !_isPaused;
         }
         public override Node Update(GameTime gameTime)
         {
@@ -199,7 +210,7 @@ namespace ShootThemAll
 
             if (ButtonControl.OnePress("Pause", G.Key.IsKeyDown(Keys.P) || GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed))
             {
-                _isPaused = !_isPaused;
+                TogglePause();
             }
 
             if (_isPaused)
@@ -292,12 +303,12 @@ namespace ShootThemAll
                 for (int i = 0; i < G.PoolBullet.GetAllObjects().Count(); i++)
                 {
                     var bullet = G.PoolBullet.GetAllObjects().ElementAt(i);
-                    batch.LeftMiddleString(G.FontMain, $"{i} : {bullet._isActive}", Vector2.One * 20 + Vector2.UnitY * i * 24, Color.White);
+                    batch.LeftMiddleString(G.FontMain, $"{i} : {bullet._index} : {bullet._isActive}", Vector2.One * 20 + Vector2.UnitY * i * 18, Color.White);
                 }
                 for (int i = 0; i < G.PoolEnemy.GetAllObjects().Count(); i++)
                 {
                     var enemy = G.PoolEnemy.GetAllObjects().ElementAt(i);
-                    batch.LeftMiddleString(G.FontMain, $"{i} : {enemy._isActive} ", Vector2.One * 20 + Vector2.UnitY * i * 24 + Vector2.UnitX * 180, Color.White);
+                    batch.LeftMiddleString(G.FontMain, $"{i} : {enemy._index} : {enemy._isActive} ", Vector2.One * 20 + Vector2.UnitY * i * 18 + Vector2.UnitX * 180, Color.White);
                 }
             }
 

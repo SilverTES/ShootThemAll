@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mugen.Core;
+using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Physics;
 
@@ -27,13 +28,7 @@ namespace ShootThemAll
         {
             _type = UID.Get<Bullet>();
 
-            Owner = owner;
-            SetPosition(position.X, position.Y);
-            _angle = angle;
-            _speed = speed;
-            _color = color;
-            _lifeTime = lifeTime;
-            _power = power;
+            Set(owner, position, angle, speed, color, lifeTime, power); 
 
             SetSize(10, 10);
             SetPivot(Position.CENTER);
@@ -54,6 +49,14 @@ namespace ShootThemAll
         }
         public override Node Init()
         {
+            //_isActive = true;
+
+            Misc.Log($"Init Bullet {_index}: {_isActive}");
+
+            if (!_isActive)
+            {
+                MessageBus.Instance.SendMessage(new TogglePauseMessage());
+            }
 
             return base.Init();
         }
