@@ -123,8 +123,6 @@ namespace ShootThemAll
         Vector2 _gridPos = new Vector2(0, 0);
         float _cellSize = 80f;
 
-        private RasterizerState scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
-
         public Area() 
         {
             G.PoolBullet = new ObjectPool<Bullet>
@@ -254,19 +252,7 @@ namespace ShootThemAll
         }
         public override Node Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
         {
-
-            // Sauvegarder l'état actuel
-            //RasterizerState previousRasterizerState = batch.GraphicsDevice.RasterizerState;
-            Rectangle previousScissorRectangle = batch.GraphicsDevice.ScissorRectangle;
-            // Définir le rectangle de clipping
-            //Rectangle scissorRect = new Rectangle(50, 50, 200, 150);
-            // Dessin avec ScissorRectangle
-            batch.End();
-            
-            var param = ScreenManager.GetLayerParameter(indexLayer);
-
-            batch.Begin(rasterizerState: scissorRasterizerState, blendState: param.blendState);
-            batch.GraphicsDevice.ScissorRectangle = AbsRect;
+            ScreenManager.BeginScissor(batch, AbsRect, indexLayer, ScreenManager.GetLayerParameter(indexLayer));
 
 
             if (indexLayer == (int)Layers.Back)
@@ -299,13 +285,8 @@ namespace ShootThemAll
             DrawChilds(batch, gameTime, indexLayer);
 
 
+            ScreenManager.EndScissor(batch);
 
-            batch.End();
-            // Restaurer l'état précédent
-            //batch.GraphicsDevice.RasterizerState = previousRasterizerState;
-            batch.GraphicsDevice.ScissorRectangle = previousScissorRectangle;
-            // Dessin supplémentaire (retour à l'état normal)
-            batch.Begin();
 
             if (indexLayer == (int)Layers.UI)
             {

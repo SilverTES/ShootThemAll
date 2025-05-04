@@ -54,21 +54,20 @@ namespace ShootThemAll
         public enum States
         {
             Idle,
-            Hit,
+            GetDamage,
             Shoot,
             MagnetHero,
             FollowHero,
             MagnetEnemy,
             FollowEnemy,
-            Dead,
         }
         public States CurState => _state.CurState;
         State<States> _state = new State<States>(States.Idle);
 
         public enum Timers
         {
-            Hit,
-            Shoot,
+            DamageTime,
+            ShootDelay,
             HasShoot,
         }
         Timer<Timers> _timer = new Timer<Timers>();
@@ -129,13 +128,13 @@ namespace ShootThemAll
 
             SetCollideZone(ZoneBody, _rect);
 
-            _timer.Set(Timers.Hit, Timer.Time(0, 0, 0.1f));
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, 5f));
+            _timer.Set(Timers.DamageTime, Timer.Time(0, 0, 0.1f));
+            _timer.Set(Timers.ShootDelay, Timer.Time(0, 0, 5f));
             _timer.Set(Timers.HasShoot, Timer.Time(0, 0, .25f));
 
-            _timer.Start(Timers.Shoot);
+            _timer.Start(Timers.ShootDelay);
 
-            _timer.On(Timers.Shoot, () =>
+            _timer.On(Timers.ShootDelay, () =>
             {
                 //Console.WriteLine("Shoooot");
                 // Debug
@@ -151,8 +150,8 @@ namespace ShootThemAll
                 _state.Change(States.Shoot);
 
                 float time = Misc.Rng.Next(30, 50) / 10f;
-                _timer.Set(Timers.Shoot, Timer.Time(0, 0, time), true);
-                _timer.Start(Timers.Shoot);
+                _timer.Set(Timers.ShootDelay, Timer.Time(0, 0, time), true);
+                _timer.Start(Timers.ShootDelay);
 
             });
 
@@ -162,33 +161,38 @@ namespace ShootThemAll
                 _timer.Stop(Timers.HasShoot);
             });
 
-            _timer.On(Timers.Hit, () =>
+            _timer.On(Timers.DamageTime, () =>
             {
                 _state.Change(States.Idle);
-                _timer.Stop(Timers.Hit);
+                _timer.Stop(Timers.DamageTime);
             });
 
 
             _state.On(States.Idle, () =>
             {
                 // Active le tir
-                _timer.Start(Timers.Shoot);
+                _timer.Start(Timers.ShootDelay);
             });
-            _state.On(States.Hit, () =>
+            _state.On(States.GetDamage, () =>
             {
                 // Active le tir
-                _timer.Start(Timers.Shoot);
+                _timer.Start(Timers.DamageTime);
+            });
+            _state.Off(States.GetDamage, () =>
+            {
+                // Active le tir
+                _timer.Start(Timers.ShootDelay);
             });
 
             _state.On(States.FollowHero, () =>
             {
                 // Désactive le tir
-                _timer.Stop(Timers.Shoot);
+                _timer.Stop(Timers.ShootDelay);
             });
             _state.On(States.FollowEnemy, () =>
             {
                 // Désactive le tir
-                _timer.Stop(Timers.Shoot);
+                _timer.Stop(Timers.ShootDelay);
             });
 
             _state.On(States.Shoot, () =>
@@ -243,7 +247,7 @@ namespace ShootThemAll
 
                         if (!_state.Is(States.FollowEnemy))
                         {
-                            _state.Change(States.Hit);
+                            _state.Set(States.GetDamage);
                             AddEnergy(-bullet.Power);
                         }
                         else
@@ -302,7 +306,7 @@ namespace ShootThemAll
                     FallMove(_speed, gameTime);
                     break;
 
-                case States.Hit:
+                case States.GetDamage:
                     HandleCollision();
                     FallMove(_speed / 2, gameTime);
 
@@ -313,27 +317,6 @@ namespace ShootThemAll
                     //Move(_speed);
                     break;
 
-                case States.Dead:
-
-                    _size -= 0.05f;
-                    if (_size <= 0)
-                    {
-                        _size = 0;
-
-                        //G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
-                        G.SoundEffectManager.Play(G.SoundExplose, 0.1f * G.Volume, 1f, 0f);
-
-                        Color color = HSV.Adjust(_color, valueMultiplier: 1.5f);
-
-                        new FxExplose(Particles.Shapes.Square, AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
-                        new FxGlow(XY, color, .1f).AppendTo(_parent);
-
-                        MessageBus.Instance.SendMessage(new EnemyDestroyedMessage(this));
-
-                        //KillMe();
-                        G.PoolEnemy.Return(this, _parent);
-                    }
-                    break;
                 case States.MagnetHero:
 
                     _x = _animate2D.Value("Magnet").X;
@@ -379,7 +362,19 @@ namespace ShootThemAll
         }
         public void DestroyMe()
         {
-            _state.Change(States.Dead);
+            //G.SoundExplose.Play(0.1f * G.Volume, 1f, 0f);
+            G.SoundEffectManager.Play(G.SoundExplose, 0.1f * G.Volume, 1f, 0f);
+
+            Color color = HSV.Adjust(_color, valueMultiplier: 1.5f);
+
+            new FxExplose(Particles.Shapes.Square, AbsXY, color, 20, 100, 50, 10, .92f).AppendTo(_parent);
+            new FxGlow(XY, color, .1f).AppendTo(_parent);
+
+            MessageBus.Instance.SendMessage(new EnemyDestroyedMessage(this));
+
+            //KillMe();
+            G.PoolEnemy.Return(this, _parent);
+
         }
         public override Node Update(GameTime gameTime)
         {
@@ -391,10 +386,10 @@ namespace ShootThemAll
 
             UpdateRect();
 
-            if (_energy <= 0 && !_state.Is(States.Dead))
+            if (_energy <= 0)
             {
                 //Console.WriteLine("DestroyMe");
-                _state.Change(States.Dead);
+                DestroyMe();
             }
 
             return base.Update(gameTime);
@@ -407,8 +402,8 @@ namespace ShootThemAll
             if (indexLayer == (int)Layers.Main)
             {
 
-                batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit) ? HSV.Adjust(_color, valueMultiplier: 1.5f) : _color, 0);
-                batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.Hit)? Color.White:Color.Gray, 3f);
+                batch.FillRectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.GetDamage) ? HSV.Adjust(_color, valueMultiplier: 1.5f) : _color, 0);
+                batch.RectangleCentered(pos, AbsRectF.GetSize() * _size, _state.Is(States.GetDamage)? Color.White:Color.Gray, 3f);
 
             }
 

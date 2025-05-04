@@ -266,7 +266,7 @@ namespace ShootThemAll
                     if (!node._isActive)
                     {
                         Misc.Log($"Node {node._index} is not active");
-                        MessageBus.Instance.SendMessage(new TogglePauseMessage());
+                        //MessageBus.Instance.SendMessage(new TogglePauseMessage());
                         continue;
                     }
 

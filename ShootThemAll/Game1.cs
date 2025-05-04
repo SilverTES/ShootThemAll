@@ -121,7 +121,8 @@ namespace ShootThemAll
             G.SoundExplose = Content.Load<SoundEffect>("Sounds/Explosion");
             G.SoundBonus = Content.Load<SoundEffect>("Sounds/success_1");
 
-            G.MusicTest = Content.Load<Song>("Musics/destinazione_altrove_-_Kalte_Ohren_(_Remix_)");
+            //G.MusicTest = Content.Load<Song>("Musics/destinazione_altrove_-_Kalte_Ohren_(_Remix_)");
+            G.MusicTest = Content.Load<Song>("Musics/music");
 
 
             G.SoundEffectManager = new SoundEffectManager();
