@@ -108,7 +108,7 @@ namespace ShootThemAll
             _size = 1f;
             _ticWave = 0f;
             _wave = 0f;
-            _easeEnergy.SetValue(_energy);
+            _easeEnergy.SetValue(_energy, Easing.Linear);
             _target = null;
             _magnet = null;
 
@@ -210,7 +210,8 @@ namespace ShootThemAll
         public void AddEnergy(int energy)
         {
             _energy += energy;
-            _easeEnergy.SetValue(_energy);
+
+            _easeEnergy.SetValue(_energy, Easing.QuadraticEaseOut);
 
             _energy = Math.Clamp(_energy, 0, 100);
         }
