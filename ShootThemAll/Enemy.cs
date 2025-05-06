@@ -288,14 +288,14 @@ namespace ShootThemAll
         public void MagnetHero(Hero hero)
         {
             _magnet = hero;
-            _animate2D.SetMotion("Magnet", Easing.QuadraticEaseOut, XY, hero._rect.Center - Vector2.UnitY * (_oY + _magnet._oY), 16);
+            _animate2D.SetMotion("Magnet", Easing.QuarticEaseOut, XY, hero._rect.Center - Vector2.UnitY * (_oY + _magnet._oY), 16);
             _animate2D.Start("Magnet");
             _state.Change(States.MagnetHero);
         }
         public void MagnetEnemy(Enemy enemy)
         {
             _magnet = enemy;
-            _animate2D.SetMotion("Magnet", Easing.QuadraticEaseOut, XY, enemy._rect.Center + Vector2.UnitY * (_oY + _magnet._oY), 16);
+            _animate2D.SetMotion("Magnet", Easing.QuarticEaseOut, XY, enemy._rect.Center + Vector2.UnitY * (_oY + _magnet._oY), 16);
             _animate2D.Start("Magnet");
             _state.Change(States.MagnetEnemy);
         }

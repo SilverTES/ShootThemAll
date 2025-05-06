@@ -252,7 +252,7 @@ namespace ShootThemAll
         }
         public override Node Draw(SpriteBatch batch, GameTime gameTime, int indexLayer)
         {
-            ScreenManager.BeginScissor(batch, AbsRect, indexLayer, ScreenManager.GetLayerParameter(indexLayer));
+            ScreenManager.BeginScissor(batch, AbsRect, indexLayer);
 
 
             if (indexLayer == (int)Layers.Back)
@@ -261,7 +261,7 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .2f) * 1f);
+                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .25f) * 1f);
 
                 _starManager.DrawStars(batch, AbsXY);
                 batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .1f, 1f);
@@ -285,7 +285,7 @@ namespace ShootThemAll
             DrawChilds(batch, gameTime, indexLayer);
 
 
-            ScreenManager.EndScissor(batch);
+            ScreenManager.EndScissor(batch, indexLayer);
 
 
             if (indexLayer == (int)Layers.UI)
