@@ -144,8 +144,8 @@ namespace ShootThemAll
 
             _grid = new Collision2DGrid(gridWidth, gridHeight, cellSize);
 
-            _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, 3f), true);
-            _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, 10f), true);
+            _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, 3f));
+            _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, 10f));
 
             _timer.Start(Timers.SpawnEnemy);
             _timer.Start(Timers.SpawnBonus);
@@ -170,7 +170,7 @@ namespace ShootThemAll
                 enemy.AppendTo(this);
 
                 float time = Misc.Rng.Next(10, 30) / 10f;
-                _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, time), true);
+                _timer.Set(Timers.SpawnEnemy, Timer.Time(0, 0, time));
             });
 
             _timer.On(Timers.SpawnBonus, () =>
@@ -183,7 +183,7 @@ namespace ShootThemAll
                 bonus.AppendTo(this);
 
                 float time = Misc.Rng.Next(80, 120) / 10f;
-                _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, time), true);
+                _timer.Set(Timers.SpawnBonus, Timer.Time(0, 0, time));
             });
 
 

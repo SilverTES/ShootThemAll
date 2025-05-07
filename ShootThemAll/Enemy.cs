@@ -152,7 +152,7 @@ namespace ShootThemAll
                 _state.Change(States.Shoot);
 
                 float time = Misc.Rng.Next(30, 50) / 10f;
-                _timer.Set(Timers.ShootDelay, Timer.Time(0, 0, time), true);
+                _timer.Set(Timers.ShootDelay, Timer.Time(0, 0, time));
                 _timer.Start(Timers.ShootDelay);
 
             });

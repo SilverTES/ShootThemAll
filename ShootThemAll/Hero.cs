@@ -80,7 +80,7 @@ namespace ShootThemAll
             SetCollideZone(ZoneBody, _rect);
             SetCollideZone(ZoneCast, _rect);
 
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed));
             _timer.Start(Timers.Shoot);
 
             MessageBus.Instance.Subscribe<FireSpeedMessage>((m) =>
@@ -101,7 +101,7 @@ namespace ShootThemAll
             _fireSpeed = Math.Clamp(_fireSpeed, 0.05f, 2f); // Clamp entre 0.1 et 2 secondes
 
             Console.WriteLine($"_fireSpeed = {_fireSpeed}");
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed), true);
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed));
             _timer.Start(Timers.Shoot);
         }
         private void HandleInput()
