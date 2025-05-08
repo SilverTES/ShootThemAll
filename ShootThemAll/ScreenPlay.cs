@@ -22,7 +22,7 @@ namespace ShootThemAll
             
             SetSize(Screen.Width, Screen.Height);
 
-            _area = new Area();
+            _area = new Area(game);
             _area.SetPosition(480, 80);
             _area.AppendTo(this);
 
@@ -44,14 +44,14 @@ namespace ShootThemAll
         {
             batch.GraphicsDevice.Clear(Color.Transparent);
 
-            if (indexLayer == (int)Layers.Back)
+            if (indexLayer == (int)Layers.BackUI)
             {
                 batch.Draw(G.TexBG00, new Rectangle(0, 0, Screen.Width, Screen.Height), Color.White);
             }
 
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
+                //batch.FillRectangle(new Rectangle(0, 0, Screen.Width, Screen.Height), Color.DarkSlateBlue * .5f);
                 //batch.Grid(Vector2.Zero, Screen.Width, Screen.Height, 40, 40, Color.Gray * .1f, 3f);
 
                 //batch.Draw(G.TexCG00, new Vector2(1100, _wave), Color.White * 1f);

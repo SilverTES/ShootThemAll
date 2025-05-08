@@ -13,6 +13,8 @@ namespace ShootThemAll
 {
     public enum Layers
     {
+        BackUI,
+        BackFX,
         Back,
         Main,
         Front,
@@ -44,6 +46,7 @@ namespace ShootThemAll
         public static Texture2D TexLine;
         public static Texture2D TexCircle;
 
+        public static Texture2D TexTile00;
         public static Texture2D TexBG00;
         public static Texture2D TexCG00;
         public static Texture2D TexGlow1;
@@ -94,12 +97,16 @@ namespace ShootThemAll
         {
             base.Initialize();
 
-            _screenPlay = new ScreenPlay(this);
 
-            ScreenManager.Init(_screenPlay, Enums.GetList<Layers>());
+            ScreenManager.Init(Enums.GetList<Layers>());
+
             ScreenManager.SetLayerParameter((int)Layers.Main, blendState: BlendState.AlphaBlend, samplerState : _samplerState);
             ScreenManager.SetLayerParameter((int)Layers.FrontFX, blendState: BlendState.Additive, samplerState: _samplerState);
             ScreenManager.SetLayerParameter((int)Layers.Glow, blendState: BlendState.Additive, samplerState: _samplerState);
+
+            _screenPlay = new ScreenPlay(this);
+
+            ScreenManager.Init(_screenPlay);
 
             G.TexLine = GFX.CreateLineTextureAA(GraphicsDevice, 100, 10, 5);
             G.TexCircle = GFX.CreateCircleTextureAA(GraphicsDevice, 100, 5);
@@ -110,6 +117,7 @@ namespace ShootThemAll
         {
             G.FontMain = Content.Load<SpriteFont>("Fonts/FontMain");
 
+            G.TexTile00 = Content.Load<Texture2D>("Images/tile00");
 
             G.TexBG00 = Content.Load<Texture2D>("Images/bg00");
             G.TexCG00 = Content.Load<Texture2D>("Images/CG00");

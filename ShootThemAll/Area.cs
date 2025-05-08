@@ -7,9 +7,6 @@ using Mugen.Event.Message;
 using Mugen.GFX;
 using Mugen.Input;
 using Mugen.Physics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace ShootThemAll
 {
@@ -20,86 +17,6 @@ namespace ShootThemAll
     public class DestroyAllEnemyMessage : IMessage
     {
         public string Name => "Destroy All Enemy";
-    }
-    public struct Star
-    {
-        public Vector2 Position;
-        public Color Color;
-        public float Size;
-        public float Speed;
-        public float Alpha;
-    }
-    public class StarManager
-    {
-        List<Star> _stars = new List<Star>();
-
-        public StarManager()
-        {
-
-        }
-        public void AddStar(Vector2 position, Color color, float size, float speed)
-        {
-            Star star = new Star
-            {
-                Position = position,
-                Color = color,
-                Size = size,
-                Speed = speed,
-                Alpha = 1f
-            };
-            _stars.Add(star);
-        }
-
-        public void GenerateStar(int nbStars, Rectangle rect)
-        {
-            for (int i = 0; i < nbStars; i++)
-            {
-                float x = Misc.Rng.Next(0, rect.Width);
-                float y = Misc.Rng.Next(0, rect.Height);
-
-                Vector2 pos = new Vector2(x, y);
-
-                Color color = new Color(Misc.Rng.Next(100, 255), Misc.Rng.Next(100, 255), Misc.Rng.Next(100, 255));
-
-                AddStar(pos, color, Misc.Rng.Next(1, 5), Misc.Rng.Next(20, 40) / 10f);
-            }
-        }
-
-        public void UpdateStars()
-        {
-            for (int i = 0; i < _stars.Count; i++)
-            {
-                Star star = _stars[i];
-                star.Position.Y += star.Speed;
-                //star.Alpha -= 0.01f;
-                //if (star.Alpha <= 0)
-                //{
-                //    _stars.RemoveAt(i);
-                //    i--;
-                //}
-                //else
-                //{
-                //    _stars[i] = star;
-                //}
-
-                star.Alpha = 1f - (1f / star.Speed) - .25f;
-
-                if (star.Position.Y > Screen.Height)
-                {
-                    star.Position.Y = 0;
-                }
-
-                _stars[i] = star;
-            }
-        }
-        public void DrawStars(SpriteBatch batch, Vector2 offset)
-        {
-            foreach (var star in _stars)
-            {
-                batch.FillRectangle(star.Position + offset, new Vector2(star.Size), star.Color * star.Alpha);
-            }
-        }
-
     }
 
     public class Area : Node
@@ -123,8 +40,14 @@ namespace ShootThemAll
         Vector2 _gridPos = new Vector2(0, 0);
         float _cellSize = 80f;
 
-        public Area() 
+        Camera _camera;
+        Vector2 parallax = Vector2.One * .5f;
+
+        public Area(Game game, int width = 640, int height = 960) 
         {
+            _camera = new Camera(game.GraphicsDevice.Viewport);
+            
+
             G.PoolBullet = new ObjectPool<Bullet>
             (
                 () => new Bullet(null, Vector2.Zero, 0, 0, Color.Transparent),
@@ -136,7 +59,7 @@ namespace ShootThemAll
                 4
             );
 
-            SetSize(640, 960);
+            SetSize(width, height);
 
             int cellSize = 80;
             int gridWidth = (int)_rect.Width / cellSize;
@@ -213,6 +136,8 @@ namespace ShootThemAll
                 }
             });
 
+            _camera.SetPosition(0, 4000);
+
         }
         public void TogglePause()
         {
@@ -220,6 +145,11 @@ namespace ShootThemAll
         }
         public override Node Update(GameTime gameTime)
         {
+            
+            _camera.Move(0, -1f);
+            ScreenManager.SetLayerParameter((int)Layers.Back, transformMatrix: _camera.GetViewMatrix(parallax));
+            //ScreenManager.SetLayerParameter((int)Layers.Main, transformMatrix: _camera.GetViewMatrix(Vector2.One * .5f));
+
             UpdateRect();
 
             if (ButtonControl.OnePress("Pause", G.Key.IsKeyDown(Keys.P) || GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed))
@@ -254,18 +184,24 @@ namespace ShootThemAll
         {
             ScreenManager.BeginScissor(batch, AbsRect, indexLayer);
 
-
+            if (indexLayer == (int)Layers.BackFX)
+            {
+                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .25f) * 1f);
+                _starManager.DrawStars(batch, AbsXY);
+            }
             if (indexLayer == (int)Layers.Back)
             {
+
+                batch.Mosaic(AbsRectF + _camera.Position * parallax, AbsX, AbsY, 5, 30, G.TexTile00, Color.White);
+
+                //batch.Draw(G.TexTile00, AbsXY, Color.White);
+
             }
 
             if (indexLayer == (int)Layers.Main)
             {
-                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .25f) * 1f);
 
-                _starManager.DrawStars(batch, AbsXY);
-                batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .1f, 1f);
-
+                //batch.Grid(_gridPos + AbsXY, AbsRectF.Width, AbsRectF.Height + _cellSize * 2, _cellSize, _cellSize, Color.WhiteSmoke * .1f, 1f);
             }
 
             if (indexLayer == (int)Layers.Front)
@@ -279,13 +215,17 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.Debug)
             {
-
             }
 
             DrawChilds(batch, gameTime, indexLayer);
 
 
             ScreenManager.EndScissor(batch, indexLayer);
+
+            if (indexLayer == (int)Layers.Debug)
+            {
+                batch.LeftTopString(G.FontMain, $"Camera Position : {_camera.Position}", new Vector2(10, 10), Color.White);
+            }
 
 
             if (indexLayer == (int)Layers.UI)

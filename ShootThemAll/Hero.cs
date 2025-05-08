@@ -334,6 +334,8 @@ namespace ShootThemAll
         {
             if (indexLayer == (int)Layers.Main)
             {
+                batch.FillRectangleCentered(AbsXY + Vector2.UnitY * 40, AbsRectF.GetSize() * .90f, Color.Black *.5f, 0);
+
                 batch.FillRectangle(AbsRectF, Color.Red);
                 batch.RectangleCentered(AbsXY, AbsRectF.GetSize(), Color.Gray * .75f, 5f);
 
