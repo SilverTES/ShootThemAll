@@ -44,7 +44,7 @@ namespace ShootThemAll
         private int _maxEnergy = 40;
         private int _energy = 40;
 
-        private float _fireSpeed = 0.4f;   
+        private float _fireRate = 0.4f;   
 
         PlayerIndex _playerIndex;
         Vector2 _accMove = new Vector2(); // Acceleration/Deceleration du mouvement du joueur si il utilise le clavier
@@ -80,12 +80,12 @@ namespace ShootThemAll
             SetCollideZone(ZoneBody, _rect);
             SetCollideZone(ZoneCast, _rect);
 
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed));
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireRate));
             _timer.Start(Timers.Shoot);
 
-            MessageBus.Instance.Subscribe<FireSpeedMessage>((m) =>
+            MessageBus.Instance.Subscribe<FireRateMessage>((m) =>
             {
-                SetFireSpeed(_fireSpeed * (1f - 1f / m.Speed)); // 10% de la vitesse
+                SetFireRate(_fireRate * (1f - 1f / m.Speed)); // 10% de la vitesse
             });
 
             MessageBus.Instance.Subscribe<EnemyMagnetMessage>((m) =>
@@ -94,14 +94,14 @@ namespace ShootThemAll
             });
 
         }
-        public void SetFireSpeed(float fireSpeed)
+        public void SetFireRate(float fireSpeed)
         {
-            _fireSpeed = fireSpeed;
+            _fireRate = fireSpeed;
 
-            _fireSpeed = Math.Clamp(_fireSpeed, 0.05f, 2f); // Clamp entre 0.1 et 2 secondes
+            _fireRate = Math.Clamp(_fireRate, 0.05f, 2f); // Clamp entre 0.1 et 2 secondes
 
-            Console.WriteLine($"_fireSpeed = {_fireSpeed}");
-            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireSpeed));
+            Console.WriteLine($"_fireRate = {_fireRate}");
+            _timer.Set(Timers.Shoot, Timer.Time(0, 0, _fireRate));
             _timer.Start(Timers.Shoot);
         }
         private void HandleInput()
@@ -236,13 +236,13 @@ namespace ShootThemAll
                 }
             }
 
-            collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bonus<FireSpeedMessage>>(), Bonus<FireSpeedMessage>.ZoneBody);
+            collider = Collision2D.OnCollideZoneByNodeType(GetCollideZone(ZoneBody), UID.Get<Bonus<FireRateMessage>>(), Bonus<FireRateMessage>.ZoneBody);
             if (collider != null)
             {
-                var bonus = collider._node as Bonus<FireSpeedMessage>;
+                var bonus = collider._node as Bonus<FireRateMessage>;
                 if (bonus != null)
                 {
-                    bonus.DestroyMe("Fire Speed +10%", new FireSpeedMessage(10));
+                    bonus.DestroyMe("Fire Rate +10%", new FireRateMessage(10));
 
                     //SetFireSpeed(_fireSpeed * (1f - 1f/10)); // 10% de la vitesse
                 }
@@ -251,7 +251,7 @@ namespace ShootThemAll
 
             UpdateCollideZone(ZoneCast, new RectangleF(_x, 0, 1, _y - _oY));
 
-            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus<FireSpeedMessage>>()], [Enemy.ZoneBody, Bonus<FireSpeedMessage>.ZoneBody]);
+            var colliders = Collision2D.ListCollideZoneByNodeType(GetCollideZone(ZoneCast), [UID.Get<Enemy>(), UID.Get<Bonus<FireRateMessage>>()], [Enemy.ZoneBody, Bonus<FireRateMessage>.ZoneBody]);
 
             if (colliders.Count > 0)
             {
@@ -271,9 +271,9 @@ namespace ShootThemAll
                     }
 
 
-                    if (node._type == UID.Get<Bonus<FireSpeedMessage>>())
+                    if (node._type == UID.Get<Bonus<FireRateMessage>>())
                     {
-                        Bonus<FireSpeedMessage> bonus = colliders[i]._node as Bonus<FireSpeedMessage>;
+                        Bonus<FireRateMessage> bonus = colliders[i]._node as Bonus<FireRateMessage>;
                         //if (bonus != null)
                         //{
                         //    //bonus.DestroyMe("Fire Speed +10%");

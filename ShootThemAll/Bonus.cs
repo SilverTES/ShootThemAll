@@ -8,11 +8,11 @@ using System;
 
 namespace ShootThemAll
 {
-    public class FireSpeedMessage : IMessage
+    public class FireRateMessage : IMessage
     {
-        public string Name => $"Fire Speed +{Speed}%";
+        public string Name => $"Fire Rate +{Speed}%";
         public float Speed { get; set; }
-        public FireSpeedMessage(float speed)
+        public FireRateMessage(float speed)
         {
             Speed = speed;
         }

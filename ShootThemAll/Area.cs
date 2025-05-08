@@ -175,7 +175,7 @@ namespace ShootThemAll
 
             _timer.On(Timers.SpawnBonus, () =>
             {
-                Bonus<FireSpeedMessage> bonus = new("FireSpeed +10%");
+                Bonus<FireRateMessage> bonus = new("FireRate +10%");
 
                 int border = 80;
 
