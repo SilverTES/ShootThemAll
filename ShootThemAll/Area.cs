@@ -136,7 +136,7 @@ namespace ShootThemAll
                 }
             });
 
-            _camera.SetPosition(0, 4000);
+            _camera.SetPosition(0, 8000);
 
         }
         public void TogglePause()
@@ -176,7 +176,7 @@ namespace ShootThemAll
 
             _timer.Update();
             UpdateChilds(gameTime);
-            _grid.UpdateGridSystemZone(this);
+            _grid.Update(this);
 
             return base.Update(gameTime);
         }
@@ -186,7 +186,8 @@ namespace ShootThemAll
 
             if (indexLayer == (int)Layers.BackFX)
             {
-                batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .25f) * 1f);
+                //batch.FillRectangle(AbsRectF, HSV.Adjust(Color.Gray, valueMultiplier: .25f) * 1f);
+                batch.FillRectangle(AbsRectF, Color.Black * 1f);
                 _starManager.DrawStars(batch, AbsXY);
             }
             if (indexLayer == (int)Layers.Back)
